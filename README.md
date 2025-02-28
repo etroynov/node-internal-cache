@@ -33,10 +33,8 @@ Please get in contact with us, if you are using some parts of node-cache's inter
 # Install
 
 ```bash
-	npm install node-internal-cache --save
+npm install node-internal-cache --save
 ```
-
-Or just require the `node_cache.js` file to get the superclass
 
 # Examples:
 
