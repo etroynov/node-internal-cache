@@ -13,6 +13,7 @@
 config.json
 config*.json
 deploy.json
+dist
 /node_modules
 /index.js
 /test/*.js

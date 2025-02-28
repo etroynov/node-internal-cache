@@ -13,20 +13,12 @@ A simple caching module that has `set`, `get` and `delete` methods and works a l
 Keys can have a timeout (`ttl`) after which they expire and are deleted from the cache.
 All keys are stored in a single object so the practical limit is at around 1m keys.
 
-## Declaration to not sell out
-
-We have received numerous requests in the past to hand over this project to a new maintainer so that it could be revived and brought back to life.
-Many of these request also offered money to essentially "buy" the project (or its reputation and its user-base).
-
-These requests are highly risky for the current users of this project, especially in times of the xz-backdoor and the thought of handing over the trust of the userbase (which was almost single-handedly built up by [@mpneuried](https://github.com/mpneuried) and sponsored by [Team Centric Software](https://www.tcs.de/)) feels like we would berate you.
-Handing the keys to this project (especially the permission to publish new versions of the package on npm), over to someone new includes handing over the trust our userbase puts into the package.
-
-Therefore **we vow not to sell this project, and it's 2,886,264 weekly downloads (according to npm as of May 29th 2024)**.
-
-Yes, this project is apparently unmaintained. If you want to pick up the slack, feel free to create a fork and start maintaining over there. If the community wants it will follow.
-
-
 ## BREAKING MAJOR RELEASE v5.x
+
+The recent 5.2.0 release:
+* dropped support for node versions before 18.x!
+* rewritten from coffescript to javascripts 
+* name changed node-cache -> node-internal-cache
 
 The recent 5.x release:
 * dropped support for node versions before 8.x!
@@ -41,7 +33,7 @@ Please get in contact with us, if you are using some parts of node-cache's inter
 # Install
 
 ```bash
-	npm install node-cache --save
+	npm install node-internal-cache --save
 ```
 
 Or just require the `node_cache.js` file to get the superclass
@@ -51,7 +43,7 @@ Or just require the `node_cache.js` file to get the superclass
 ## Initialize (INIT):
 
 ```js
-const NodeCache = require( "node-cache" );
+const NodeCache = require( "node-internal-cache" );
 const myCache = new NodeCache();
 ```
 
@@ -68,11 +60,11 @@ const myCache = new NodeCache();
 	- _Here's a [simple code example](https://runkit.com/mpneuried/useclones-example-83) showing the different behavior_
 - `deleteOnExpire`: *(default: `true`)* whether variables will be deleted automatically when they expire.
 If `true` the variable will be deleted. If `false` the variable will remain. You are encouraged to handle the variable upon the event `expired` by yourself.
-- `enableLegacyCallbacks`: *(default: `false`)* re-enables the usage of callbacks instead of sync functions. Adds an additional `cb` argument to each function which resolves to `(err, result)`. will be removed in node-cache v6.x.
+- `enableLegacyCallbacks`: *(default: `false`)* re-enables the usage of callbacks instead of sync functions. Adds an additional `cb` argument to each function which resolves to `(err, result)`. will be removed in node-internal-cache v6.x.
 - `maxKeys`: *(default: `-1`)* specifies a maximum amount of keys that can be stored in the cache. If a new item is set and the cache is full, an error is thrown and the key will not be saved in the cache. -1 disables the key limit.
 
 ```js
-const NodeCache = require( "node-cache" );
+const NodeCache = require( "node-internal-cache" );
 const myCache = new NodeCache( { stdTTL: 100, checkperiod: 120 } );
 ```
 
@@ -462,33 +454,10 @@ Node-Cache supports all node versions >= 8
 
 [![NPM](https://nodei.co/npm-dl/node-cache.png?months=6)](https://nodei.co/npm/node-cache/)
 
-## Other projects
-
-|Name|Description|
-|:--|:--|
-|[**rsmq**](https://github.com/smrchy/rsmq)|A really simple message queue based on redis|
-|[**redis-heartbeat**](https://github.com/mpneuried/redis-heartbeat)|Pulse a heartbeat to redis. This can be used to detach or attach servers to nginx or similar problems.|
-|[**systemhealth**](https://github.com/mpneuried/systemhealth)|Node module to run simple custom checks for your machine or it's connections. It will use [redis-heartbeat](https://github.com/mpneuried/redis-heartbeat) to send the current state to redis.|
-|[**rsmq-cli**](https://github.com/mpneuried/rsmq-cli)|a terminal client for rsmq|
-|[**rest-rsmq**](https://github.com/smrchy/rest-rsmq)|REST interface for.|
-|[**redis-sessions**](https://github.com/smrchy/redis-sessions)|An advanced session store for NodeJS and Redis|
-|[**connect-redis-sessions**](https://github.com/mpneuried/connect-redis-sessions)|A connect or express middleware to simply use the [redis sessions](https://github.com/smrchy/redis-sessions). With [redis sessions](https://github.com/smrchy/redis-sessions) you can handle multiple sessions per user_id.|
-|[**redis-notifications**](https://github.com/mpneuried/redis-notifications)|A redis based notification engine. It implements the rsmq-worker to safely create notifications and recurring reports.|
-|[**nsq-logger**](https://github.com/mpneuried/nsq-logger)|Nsq service to read messages from all topics listed within a list of nsqlookupd services.|
-|[**nsq-topics**](https://github.com/mpneuried/nsq-topics)|Nsq helper to poll a nsqlookupd service for all it's topics and mirror it locally.|
-|[**nsq-nodes**](https://github.com/mpneuried/nsq-nodes)|Nsq helper to poll a nsqlookupd service for all it's nodes and mirror it locally.|
-|[**nsq-watch**](https://github.com/mpneuried/nsq-watch)|Watch one or many topics for unprocessed messages.|
-|[**hyperrequest**](https://github.com/mpneuried/hyperrequest)|A wrapper around [hyperquest](https://github.com/substack/hyperquest) to handle the results|
-|[**task-queue-worker**](https://github.com/smrchy/task-queue-worker)|A powerful tool for background processing of tasks that are run by making standard http requests
-|[**soyer**](https://github.com/mpneuried/soyer)|Soyer is small lib for server side use of Google Closure Templates with node.js.|
-|[**grunt-soy-compile**](https://github.com/mpneuried/grunt-soy-compile)|Compile Goggle Closure Templates ( SOY ) templates including the handling of XLIFF language files.|
-|[**backlunr**](https://github.com/mpneuried/backlunr)|A solution to bring Backbone Collections together with the browser fulltext search engine Lunr.js|
-|[**domel**](https://github.com/mpneuried/domel)|A simple dom helper if you want to get rid of jQuery|
-|[**obj-schema**](https://github.com/mpneuried/obj-schema)|Simple module to validate an object by a predefined schema|
-
 # The MIT License (MIT)
 
 Copyright © 2019 Mathias Peter and the node-cache maintainers, https://github.com/node-cache/node-cache
+Copyright © 2025 Evgenii Troinov and the node-cache/node-internal-cache maintainers, https://github.com/etroynov/node-cache
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
