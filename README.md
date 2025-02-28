@@ -4,7 +4,7 @@
 ![Dependency status](https://img.shields.io/david/node-cache/node-cache)
 [![NPM package version](https://img.shields.io/npm/v/node-internal-cache?label=npm%20package)](https://www.npmjs.com/package/node-internal-cache)
 [![NPM monthly downloads](https://img.shields.io/npm/dm/node-internal-cache)](https://www.npmjs.com/package/node-internal-cache)
-[![GitHub issues](https://img.shields.io/github/issues/etroynov/node-internal-cache)](https://github.com/etroynov/node-internal-cache/issues)
+[![GitHub issues](https://img.shields.io/github/issues/etroynov/node-cache)](https://github.com/etroynov/node-cache/issues)
 [![Coveralls Coverage](https://img.shields.io/coveralls/node-cache/node-cache.svg)](https://coveralls.io/github/node-cache/node-cache)
 
 # Simple and fast NodeJS internal caching.
