@@ -1,9 +1,8 @@
 ![Logo](./logo/logo.png)
 
 [![Node.js CI](https://github.com/etroynov/node-cache/workflows/Node.js%20CI/badge.svg?branch=master)](https://github.com/etroynov/node-cache/actions?query=workflow%3A%22Node.js+CI%22+branch%3A%22master%22)
-![Dependency status](https://img.shields.io/david/etroynov/node-cache)
 [![NPM package version](https://img.shields.io/npm/v/node-internal-cache?label=npm%20package)](https://www.npmjs.com/package/node-internal-cache)
-[![NPM monthly downloads](https://img.shields.io/npm/dm/node-internal-cache)](https://www.npmjs.com/package/node-internal-cache)
+[![NPM package size](https://img.shields.io/bundlephobia/min/node-internal-cache)
 [![GitHub issues](https://img.shields.io/github/issues/etroynov/node-cache)](https://github.com/etroynov/node-cache/issues)
 [![Coveralls Coverage](https://img.shields.io/coveralls/node-cache/node-cache.svg)](https://coveralls.io/github/node-cache/node-cache)
 
