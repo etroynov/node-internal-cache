@@ -1,7 +1,7 @@
 ![Logo](./logo/logo.png)
 
-[![Node.js CI](https://github.com/node-cache/node-cache/workflows/Node.js%20CI/badge.svg?branch=master)](https://github.com/node-cache/node-cache/actions?query=workflow%3A%22Node.js+CI%22+branch%3A%22master%22)
-![Dependency status](https://img.shields.io/david/node-cache/node-cache)
+[![Node.js CI](https://github.com/etroynov/node-cache/workflows/Node.js%20CI/badge.svg?branch=master)](https://github.com/etroynov/node-cache/actions?query=workflow%3A%22Node.js+CI%22+branch%3A%22master%22)
+![Dependency status](https://img.shields.io/david/etroynov/node-cache)
 [![NPM package version](https://img.shields.io/npm/v/node-internal-cache?label=npm%20package)](https://www.npmjs.com/package/node-internal-cache)
 [![NPM monthly downloads](https://img.shields.io/npm/dm/node-internal-cache)](https://www.npmjs.com/package/node-internal-cache)
 [![GitHub issues](https://img.shields.io/github/issues/etroynov/node-cache)](https://github.com/etroynov/node-cache/issues)
@@ -12,6 +12,12 @@
 A simple caching module that has `set`, `get` and `delete` methods and works a little bit like memcached.
 Keys can have a timeout (`ttl`) after which they expire and are deleted from the cache.
 All keys are stored in a single object so the practical limit is at around 1m keys.
+
+## Why node-internal-cache ?
+
+According to the [Declaration to not sell out](https://github.com/node-cache/node-cache?tab=readme-ov-file#declaration-to-not-sell-out) from the original repository, the `node-cache` package is no longer supported and the authors understandably do not plan to give the repository to other hands, they also recommended that anyone who wants to continue working on the project should create a fork, which is the reason why this project was created.
+
+This project is an important part of our products, but since it is unsupported it is slowly becoming obsolete and requires support and regular maintenance, so it was decided to provide this project with ongoing support.
 
 ## BREAKING MAJOR RELEASE v5.x
 
