@@ -21,6 +21,10 @@ This project is an important part of our products, but since it is unsupported i
 
 ## BREAKING MAJOR RELEASE v5.x
 
+The recent 5.3.0 release:
+* rewritten from ES5 -> ES6, IIFE -> CommonJS
+* updated docs
+
 The recent 5.2.0 release:
 * dropped support for node versions before 18.x!
 * rewritten from coffescript to javascripts 
