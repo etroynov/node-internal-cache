@@ -20,6 +20,9 @@ This project is an important part of our products, but since it is unsupported i
 
 ## BREAKING MAJOR RELEASE v5.x
 
+The recent 5.5.0 release:
+* Clone pkg removed from the project
+
 The recent 5.4.0 release:
 * rewritten from Javascript -> Typescript
 
