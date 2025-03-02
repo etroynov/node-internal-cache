@@ -1,5 +1,5 @@
 /**
- * node-internal-cache 5.4.0 ( 2025-03-01 )
+ * node-internal-cache 5.5.0 ( 2025-03-01 )
  * https://github.com/etroynov/node-internal-cache
  *
  * Released under the MIT license
@@ -10,14 +10,7 @@
 
 import { EventEmitter } from "node:events";
 
-import clone from './clone';
-
-// Helper function to check if the method is bound correctly
-const boundMethodCheck = (instance: NodeCache, Constructor: any) => {
-  if (!(instance instanceof Constructor)) {
-    throw new Error("Bound instance method accessed before binding");
-  }
-};
+import clone from "./clone";
 
 type TTL = number | undefined;
 type Key = string | number;
@@ -57,7 +50,7 @@ class NodeCache extends EventEmitter {
 
   /* Define standard error messages as a prototype property */
   _ERRORS: {
-    [key: string]: string
+    [key: string]: string;
   } = {
     ENOTFOUND: "Key `__key` not found",
     ECACHEFULL: "Cache max keys amount exceeded",
@@ -136,22 +129,22 @@ class NodeCache extends EventEmitter {
   }
 
   get(key: Key) {
-    boundMethodCheck(this, NodeCache);
     if (this._isInvalidKey(key)) {
       throw this._error("EKEYTYPE", { type: typeof key });
     }
+
     if (this.data[key] != null && this._check(key, this.data[key])) {
       this.stats.hits++;
       return this._unwrap(this.data[key]);
-    } else {
-      this.stats.misses++;
-      return undefined;
     }
+
+    this.emit("miss", key);
+    this.stats.misses++;
+
+    return undefined;
   }
 
   mget(keys: Key) {
-    boundMethodCheck(this, NodeCache);
-
     if (!Array.isArray(keys)) {
       throw this._error("EKEYSTYPE");
     }
@@ -161,10 +154,12 @@ class NodeCache extends EventEmitter {
       if (this._isInvalidKey(key)) {
         throw this._error("EKEYTYPE", { type: typeof key });
       }
+
       if (this.data[key] != null && this._check(key, this.data[key])) {
         this.stats.hits++;
         oRet[key] = this._unwrap(this.data[key]);
       } else {
+        this.emit('miss', keys);
         this.stats.misses++;
       }
     }
@@ -172,8 +167,6 @@ class NodeCache extends EventEmitter {
   }
 
   set(key: Key, value: any, ttl?: number) {
-    boundMethodCheck(this, NodeCache);
-
     if (this.options.maxKeys > -1 && this.stats.keys >= this.options.maxKeys) {
       throw this._error("ECACHEFULL");
     }
@@ -209,21 +202,21 @@ class NodeCache extends EventEmitter {
   }
 
   fetch(key: Key, ttl?: number | undefined, value?: any) {
-    boundMethodCheck(this, NodeCache);
     if (this.has(key)) {
       return this.get(key);
     }
+
     if (typeof value === "undefined") {
       value = ttl;
       ttl = undefined;
     }
+
     const ret = typeof value === "function" ? value() : value;
     this.set(key, ret, ttl);
     return ret;
   }
 
   mset(keyValueSet: any) {
-    boundMethodCheck(this, NodeCache);
     if (
       this.options.maxKeys > -1 &&
       this.stats.keys + keyValueSet.length >= this.options.maxKeys
@@ -249,8 +242,6 @@ class NodeCache extends EventEmitter {
   }
 
   del(keys: Key | Key[]) {
-    boundMethodCheck(this, NodeCache);
-
     if (!Array.isArray(keys)) {
       keys = [keys];
     }
@@ -277,16 +268,16 @@ class NodeCache extends EventEmitter {
   }
 
   take(key: Key) {
-    boundMethodCheck(this, NodeCache);
     const ret = this.get(key);
     if (ret != null) {
       this.del(key);
     }
+
+    this.emit("take", key);
     return ret;
   }
 
   ttl(key: Key, ttl?: TTL) {
-    boundMethodCheck(this, NodeCache);
     ttl = ttl || this.options.stdTTL;
     if (!key) {
       return false;
@@ -307,7 +298,6 @@ class NodeCache extends EventEmitter {
   }
 
   getTtl(key: Key) {
-    boundMethodCheck(this, NodeCache);
     if (!key) {
       return undefined;
     }
@@ -322,22 +312,18 @@ class NodeCache extends EventEmitter {
   }
 
   keys() {
-    boundMethodCheck(this, NodeCache);
     return Object.keys(this.data);
   }
 
   has(key: Key) {
-    boundMethodCheck(this, NodeCache);
     return this.data[key] != null && this._check(key, this.data[key]);
   }
 
   getStats() {
-    boundMethodCheck(this, NodeCache);
     return this.stats;
   }
 
   flushAll(_startPeriod = true) {
-    boundMethodCheck(this, NodeCache);
     this.data = {};
     this.stats = { hits: 0, misses: 0, keys: 0, ksize: 0, vsize: 0 };
     this._killCheckPeriod();
@@ -346,19 +332,15 @@ class NodeCache extends EventEmitter {
   }
 
   flushStats() {
-    boundMethodCheck(this, NodeCache);
     this.stats = { hits: 0, misses: 0, keys: 0, ksize: 0, vsize: 0 };
     this.emit("flush_stats");
   }
 
   close() {
-    boundMethodCheck(this, NodeCache);
     this._killCheckPeriod();
   }
 
   _checkData(startPeriod = true) {
-    boundMethodCheck(this, NodeCache);
-
     for (const key in this.data) {
       const value = this.data[key];
       this._check(key, value);
@@ -384,7 +366,6 @@ class NodeCache extends EventEmitter {
   }
 
   _check(key: Key, data: any) {
-    boundMethodCheck(this, NodeCache);
     let retval = true;
     if (data.t !== 0 && data.t < Date.now()) {
       if (this.options.deleteOnExpire) {
@@ -397,14 +378,12 @@ class NodeCache extends EventEmitter {
   }
 
   _isInvalidKey(key: Key) {
-    boundMethodCheck(this, NodeCache);
     if (!this.validKeyTypes.includes(typeof key)) {
       return this._error("EKEYTYPE", { type: typeof key });
     }
   }
 
   _wrap(value: any, ttl?: Key, asClone = true) {
-    boundMethodCheck(this, NodeCache);
     if (!this.options.useClones) {
       asClone = false;
     }
@@ -413,7 +392,7 @@ class NodeCache extends EventEmitter {
     const ttlMultiplicator = 1000;
     if (ttl === 0) {
       livetime = 0;
-    } else if (typeof ttl === 'number') {
+    } else if (typeof ttl === "number") {
       livetime = now + ttl * ttlMultiplicator;
     } else {
       livetime =
@@ -439,7 +418,6 @@ class NodeCache extends EventEmitter {
   }
 
   _getValLength(value: any) {
-    boundMethodCheck(this, NodeCache);
     if (typeof value === "string") {
       return value.length;
     } else if (this.options.forceString) {
@@ -466,7 +444,6 @@ class NodeCache extends EventEmitter {
   }
 
   _error(type: any, data = {}) {
-    boundMethodCheck(this, NodeCache);
     const error: any = new Error();
     error.name = type;
     error.errorcode = type;
@@ -476,7 +453,6 @@ class NodeCache extends EventEmitter {
   }
 
   _initErrors() {
-    boundMethodCheck(this, NodeCache);
     this.ERRORS = {};
     for (const errType in this._ERRORS) {
       const errMsg = this._ERRORS[errType];

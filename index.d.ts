@@ -24,10 +24,7 @@ declare namespace NodeCache {
 		 * @param key cache key or an array of keys
 		 * @param cb Callback function
 		 */
-		get<T>(
-			key: Key,
-			cb?: Callback<T>
-		): T | undefined;
+		get<T>(key: Key, cb?: Callback<T>): T | undefined;
 
 		/**
 		 * get multiple cached keys at once and change the stats
@@ -37,7 +34,7 @@ declare namespace NodeCache {
 		 */
 		mget<T>(
 			keys: Key[],
-			cb?: Callback<{ [key: string]: T }>
+			cb?: Callback<{ [key: string]: T }>,
 		): { [key: string]: T };
 
 		/**
@@ -53,23 +50,17 @@ declare namespace NodeCache {
 			key: Key,
 			value: T,
 			ttl: number | string,
-			cb?: Callback<boolean>
+			cb?: Callback<boolean>,
 		): boolean;
 
-		set<T>(
-			key: Key,
-			value: T,
-			cb?: Callback<boolean>
-		): boolean;
+		set<T>(key: Key, value: T, cb?: Callback<boolean>): boolean;
 
 		/**
 		 * set multiple cached keys at once and change the stats
 		 *
 		 * @param keyValueSet  an array of object which includes key,value and ttl
 		 */
-		mset<T>(
-			keyValueSet: ValueSetItem<T>[],
-		): boolean;
+		mset<T>(keyValueSet: ValueSetItem<T>[]): boolean;
 
 		/**
 		 * remove keys
@@ -77,33 +68,18 @@ declare namespace NodeCache {
 		 * @param cb Callback function
 		 * @returns Number of deleted keys
 		 */
-		del(
-			keys: Key | Key[],
-			cb?: Callback<number>
-		): number;
+		del(keys: Key | Key[], cb?: Callback<number>): number;
 
 		/**
 		 * reset or redefine the ttl of a key. If `ttl` is not passed or set to 0 it's similar to `.del()`
 		 */
-		ttl(
-			key: Key,
-			ttl: number,
-			cb?: Callback<boolean>
-		): boolean;
+		ttl(key: Key, ttl: number, cb?: Callback<boolean>): boolean;
 
-		ttl(
-			key: Key,
-			cb?: Callback<boolean>
-		): boolean;
+		ttl(key: Key, cb?: Callback<boolean>): boolean;
 
-		getTtl(
-			key: Key,
-		): number|undefined;
+		getTtl(key: Key): number | undefined;
 
-		getTtl(
-			key: Key,
-			cb?: Callback<boolean>
-		): boolean;
+		getTtl(key: Key, cb?: Callback<boolean>): boolean;
 
 		/**
 		 * list all keys within this cache
@@ -140,7 +116,7 @@ declare namespace NodeCache {
 		key: Key;
 		val: T;
 		ttl?: number;
-	}
+	};
 
 	interface Data {
 		[key: string]: WrappedValue<any>;
@@ -227,7 +203,7 @@ declare namespace NodeCache {
 	type Callback<T> = (err: any, data: T | undefined) => void;
 }
 
-import events = require("events");
+import events = require('events');
 
 import Data = NodeCache.Data;
 import Key = NodeCache.Key;
@@ -256,9 +232,7 @@ declare class NodeCache extends events.EventEmitter {
 	 * @param key cache key
 	 * @returns The value stored in the key
 	 */
-	get<T>(
-		key: Key
-	): T | undefined;
+	get<T>(key: Key): T | undefined;
 
 	/**
 	 * get multiple cached keys at once and change the stats
@@ -266,9 +240,7 @@ declare class NodeCache extends events.EventEmitter {
 	 * @param keys an array of keys
 	 * @returns an object containing the values stored in the matching keys
 	 */
-	mget<T>(
-		keys: Key[]
-	): { [key: string]: T };
+	mget<T>(keys: Key[]): { [key: string]: T };
 
 	/**
 	 * set a cached key and change the stats
@@ -278,43 +250,27 @@ declare class NodeCache extends events.EventEmitter {
 	 * it to a serialized JSON
 	 * @param ttl The time to live in seconds.
 	 */
-	set<T>(
-		key: Key,
-		value: T,
-		ttl: number | string
-	): boolean;
+	set<T>(key: Key, value: T, ttl: number | string): boolean;
 
-	set<T>(
-		key: Key,
-		value: T
-	): boolean;
+	set<T>(key: Key, value: T): boolean;
 
 	/**
 	 * in the event of a cache miss (no value is assinged to given cache key), value will be written to cache and returned. In case of cache hit, cached value will be returned without executing given value. If the given value is type of `Function`, it will be executed and returned result will be fetched
-	 * 
+	 *
 	 * @param key cache key
 	 * @param ttl The time to live in seconds.
 	 * @param value function that returns a value to be stored in cache, or the value itself
 	 */
-	fetch<T>(
-		key: Key,
-		ttl: number | string,
-		value: () => T,
-  ): T;
+	fetch<T>(key: Key, ttl: number | string, value: () => T): T;
 
-	fetch<T>(
-		key: Key,
-		value: () => T,
-	): T;
+	fetch<T>(key: Key, value: () => T): T;
 
 	/**
 	 * set multiple cached keys at once and change the stats
 	 *
 	 * @param keyValueSet an array of object which includes key,value and ttl
 	 */
-	mset<T>(
-		keyValueSet: ValueSetItem<T>[]
-	): boolean;
+	mset<T>(keyValueSet: ValueSetItem<T>[]): boolean;
 
 	/**
 	 * remove keys
@@ -322,9 +278,7 @@ declare class NodeCache extends events.EventEmitter {
 	 * @param cb Callback function
 	 * @returns Number of deleted keys
 	 */
-	del(
-		keys: Key | Key[]
-	): number;
+	del(keys: Key | Key[]): number;
 
 	/**
 	 * get a cached key and remove it from the cache.
@@ -334,29 +288,18 @@ declare class NodeCache extends events.EventEmitter {
 	 * @param key cache key
 	 * @returns The value stored in the key
 	 */
-	take<T>(
-		key: Key
-	): T | undefined;
-					  
+	take<T>(key: Key): T | undefined;
+
 	/**
 	 * reset or redefine the ttl of a key. If `ttl` is not passed or set to 0 it's similar to `.del()`
 	 */
-	ttl(
-		key: Key,
-		ttl: number
-	): boolean;
+	ttl(key: Key, ttl: number): boolean;
 
-	ttl(
-		key: Key
-	): boolean;
+	ttl(key: Key): boolean;
 
-	getTtl(
-		key: Key,
-	): number|undefined;
+	getTtl(key: Key): number | undefined;
 
-	getTtl(
-		key: Key
-	): boolean;
+	getTtl(key: Key): boolean;
 
 	/**
 	 * list all keys within this cache
@@ -393,6 +336,5 @@ declare class NodeCache extends events.EventEmitter {
 	 */
 	flushStats(): void;
 }
-
 
 export = NodeCache;

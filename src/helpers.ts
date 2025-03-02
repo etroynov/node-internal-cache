@@ -1,13 +1,13 @@
 export const randomString = (length = 5, withNumbers = true) => {
-	let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 	if (withNumbers) {
-		chars += "0123456789";
+		chars += '0123456789';
 	}
 
 	return Array.from(
 		{ length },
 		() => chars[Math.floor(Math.random() * chars.length)],
-	).join("");
+	).join('');
 };
 
 /**
@@ -16,7 +16,7 @@ export const randomString = (length = 5, withNumbers = true) => {
  * @param {Number} max
  * @return {Number} generated random number
  */
-export const randomNumber = (max) => Math.floor(Math.random() * (max + 1));
+export const randomNumber = (max: number) => Math.floor(Math.random() * (max + 1));
 
 /**
  * Subtracts all objB keys from objA keys and returns the result.
@@ -26,7 +26,7 @@ export const randomNumber = (max) => Math.floor(Math.random() * (max + 1));
  * @param {Object} objB
  * @return {Object} Object with the diffed values
  */
-export const diffKeys = (objA, objB) => {
+export const diffKeys = (objA: any, objB: any) => {
 	return Object.keys(objA).reduce((diff, key) => {
 		if (objB.hasOwnProperty(key)) {
 			diff[key] = objA[key] - objB[key];
@@ -34,4 +34,3 @@ export const diffKeys = (objA, objB) => {
 		return diff;
 	}, {});
 };
-

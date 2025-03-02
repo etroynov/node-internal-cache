@@ -20,6 +20,11 @@ This project is an important part of our products, but since it is unsupported i
 
 ## BREAKING MAJOR RELEASE v5.x
 
+The recent 5.6.0 release:
+* boundMethodCheck was removed as part of the legacy code
+* Added Event on missed in get [#223](https://github.com/node-cache/node-cache/pull/223)
+* Added Event on take in take
+
 The recent 5.5.0 release:
 * Clone pkg removed from the project
 

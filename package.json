@@ -1,79 +1,79 @@
 {
-  "name": "node-internal-cache",
-  "description": "Simple and fast NodeJS internal caching. Node internal in memory cache like memcached.",
-  "keywords": [
-    "cache",
-    "caching",
-    "local",
-    "variable",
-    "multi",
-    "memory",
-    "internal",
-    "node",
-    "memcached",
-    "object"
-  ],
-  "tags": [
-    "cache",
-    "caching",
-    "local",
-    "variable",
-    "multi",
-    "memory",
-    "internal",
-    "node",
-    "memcached",
-    "object"
-  ],
-  "version": "5.5.0",
-  "author": "mpneuried <mp@tcs.de>",
-  "maintainers": [
-    {
-      "name": "M. Peter",
-      "email": "mp@tcs.de",
-      "url": "https://github.com/mpneuried"
-    },
-    {
-      "name": "Joshy",
-      "email": "erdiicodes@gmail.com",
-      "url": "https://erdii.engineering/"
-    },
-    {
-      "name": "Evgenii Troinov",
-      "email": "troinof@gmail.com",
-      "url": "https://github.com/etroynov"
-    }
-  ],
-  "main": "./index.js",
-  "types": "./index.d.ts",
-  "homepage": "https://github.com/etroynov/node-cache",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/etroynov/node-cache.git"
-  },
-  "license": "MIT",
-  "engines": {
-    "node": ">= 18.0.0"
-  },
-  "scripts": {
-    "test": "nyc ts-mocha --paths src/*.test.ts",
-    "lint": "biome check ./src",
-    "build": "tsup && npx copyfiles package.json README.md dist"
-  },
-  "devDependencies": {
-    "tsup": "^8.4.0",
-    "@types/clone": "^2.1.4",
-    "@biomejs/biome": "^1.9.4",
-    "@types/node": "^18.19.78",
-    "@types/mocha": "^10.0.10",
-    "coveralls": "^3.1.1",
-    "lodash": "^4.17.21",
-    "tsconfig-paths": "^4.2.0",
-    "ts-mocha": "^11.1.0",
-    "ts-node": "^10.9.2",
-    "mocha": "^11.1.0",
-    "nyc": "^17.1.0",
-    "should": "13.2.3",
-    "typescript": "^5.8.2"
-  }
+	"name": "node-internal-cache",
+	"description": "Simple and fast NodeJS internal caching. Node internal in memory cache like memcached.",
+	"keywords": [
+		"cache",
+		"caching",
+		"local",
+		"variable",
+		"multi",
+		"memory",
+		"internal",
+		"node",
+		"memcached",
+		"object"
+	],
+	"tags": [
+		"cache",
+		"caching",
+		"local",
+		"variable",
+		"multi",
+		"memory",
+		"internal",
+		"node",
+		"memcached",
+		"object"
+	],
+	"version": "5.5.0",
+	"author": "mpneuried <mp@tcs.de>",
+	"maintainers": [
+		{
+			"name": "M. Peter",
+			"email": "mp@tcs.de",
+			"url": "https://github.com/mpneuried"
+		},
+		{
+			"name": "Joshy",
+			"email": "erdiicodes@gmail.com",
+			"url": "https://erdii.engineering/"
+		},
+		{
+			"name": "Evgenii Troinov",
+			"email": "troinof@gmail.com",
+			"url": "https://github.com/etroynov"
+		}
+	],
+	"main": "./index.js",
+	"types": "./index.d.ts",
+	"homepage": "https://github.com/etroynov/node-cache",
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/etroynov/node-cache.git"
+	},
+	"license": "MIT",
+	"engines": {
+		"node": ">= 18.0.0"
+	},
+	"scripts": {
+		"test": "nyc ts-mocha --paths src/*.test.ts",
+		"lint": "biome check ./src",
+		"build": "tsup && npx copyfiles package.json README.md dist"
+	},
+	"devDependencies": {
+		"tsup": "^8.4.0",
+		"@types/clone": "^2.1.4",
+		"@biomejs/biome": "^1.9.4",
+		"@types/node": "^18.19.78",
+		"@types/mocha": "^10.0.10",
+		"coveralls": "^3.1.1",
+		"lodash": "^4.17.21",
+		"tsconfig-paths": "^4.2.0",
+		"ts-mocha": "^11.1.0",
+		"ts-node": "^10.9.2",
+		"mocha": "^11.1.0",
+		"nyc": "^17.1.0",
+		"should": "13.2.3",
+		"typescript": "^5.8.2"
+	}
 }
