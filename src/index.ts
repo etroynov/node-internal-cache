@@ -208,7 +208,7 @@ class NodeCache extends EventEmitter {
     return true;
   }
 
-  fetch(key: Key, ttl: number | undefined, value: any) {
+  fetch(key: Key, ttl?: number | undefined, value?: any) {
     boundMethodCheck(this, NodeCache);
     if (this.has(key)) {
       return this.get(key);
@@ -285,7 +285,7 @@ class NodeCache extends EventEmitter {
     return ret;
   }
 
-  ttl(key: Key, ttl: TTL) {
+  ttl(key: Key, ttl?: TTL) {
     boundMethodCheck(this, NodeCache);
     ttl = ttl || this.options.stdTTL;
     if (!key) {
@@ -403,7 +403,7 @@ class NodeCache extends EventEmitter {
     }
   }
 
-  _wrap(value: any, ttl: Key, asClone = true) {
+  _wrap(value: any, ttl?: Key, asClone = true) {
     boundMethodCheck(this, NodeCache);
     if (!this.options.useClones) {
       asClone = false;
