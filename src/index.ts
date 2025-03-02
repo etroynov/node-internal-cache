@@ -8,8 +8,9 @@
  * Maintained by  ( Evgenii Troinov<troinof@gmail.com> )
  */
 
-import clone from "clone";
-import { EventEmitter } from "events";
+import { EventEmitter } from "node:events";
+
+import clone from './clone';
 
 // Helper function to check if the method is bound correctly
 const boundMethodCheck = (instance: NodeCache, Constructor: any) => {
@@ -148,11 +149,13 @@ class NodeCache extends EventEmitter {
     }
   }
 
-  mget(keys: Key[]) {
+  mget(keys: Key) {
     boundMethodCheck(this, NodeCache);
+
     if (!Array.isArray(keys)) {
       throw this._error("EKEYSTYPE");
     }
+
     const oRet: Storage = {};
     for (const key of keys) {
       if (this._isInvalidKey(key)) {
@@ -168,21 +171,27 @@ class NodeCache extends EventEmitter {
     return oRet;
   }
 
-  set(key: Key, value: any, ttl: number | undefined) {
+  set(key: Key, value: any, ttl?: number) {
     boundMethodCheck(this, NodeCache);
+
     if (this.options.maxKeys > -1 && this.stats.keys >= this.options.maxKeys) {
       throw this._error("ECACHEFULL");
     }
+
     if (this.options.forceString && typeof value !== "string") {
       value = JSON.stringify(value);
     }
+
     if (ttl == null) {
       ttl = this.options.stdTTL;
     }
+
     if (this._isInvalidKey(key)) {
       throw this._error("EKEYTYPE", { type: typeof key });
     }
+
     let existent = false;
+
     if (this.data[key]) {
       existent = true;
       this.stats.vsize -= this._getValLength(

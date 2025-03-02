@@ -1,6 +1,6 @@
 import fs from 'fs';
 import should from "should";
-import clone from "lodash/clone";
+import clone from "./clone";
 import nodeCache from "./index";
 import { randomNumber, randomString, diffKeys } from "./helpers";
 
@@ -28,7 +28,7 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, functi
     console.log(txt);
   });
 
-  describe("general sync-style", function () {
+  describe("base", function () {
     before(function () {
       localCache.flushAll();
       state = {

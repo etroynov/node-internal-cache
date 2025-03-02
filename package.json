@@ -60,9 +60,6 @@
     "lint": "biome check ./src",
     "build": "tsup && npx copyfiles package.json README.md dist"
   },
-  "dependencies": {
-    "clone": "2.1.2"
-  },
   "devDependencies": {
     "tsup": "^8.4.0",
     "@types/clone": "^2.1.4",
