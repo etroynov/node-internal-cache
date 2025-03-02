@@ -58,7 +58,7 @@
   "scripts": {
     "test": "nyc ts-mocha --paths src/*.test.ts",
     "lint": "biome check ./src",
-    "build": "tsup"
+    "build": "tsup && npx copyfiles package.json README.md dist"
   },
   "dependencies": {
     "clone": "2.1.2"
