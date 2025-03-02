@@ -1,11 +1,11 @@
-const fs = require("fs");
-const should = require("should");
-const clone = require("lodash/clone");
-const { stringify } = JSON;
-const pkg = JSON.parse(fs.readFileSync("package.json"));
-const nodeCache = require("./index");
-const { randomNumber, randomString, diffKeys } = require("./helpers");
+import fs from 'fs';
+import should from "should";
+import clone from "lodash/clone";
+import nodeCache from "./index";
+import { randomNumber, randomString, diffKeys } from "./helpers";
 
+const { stringify } = JSON;
+const pkg = JSON.parse(fs.readFileSync("package.json", 'utf-8'));
 const localCache = new nodeCache({ stdTTL: 0 });
 const localCacheNoClone = new nodeCache({ stdTTL: 0, useClones: false, checkperiod: 0 });
 const localCacheMaxKeys = new nodeCache({ maxKeys: 2 });

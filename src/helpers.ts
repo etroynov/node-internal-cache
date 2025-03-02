@@ -1,4 +1,4 @@
-const randomString = (length = 5, withNumbers = true) => {
+export const randomString = (length = 5, withNumbers = true) => {
 	let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 	if (withNumbers) {
 		chars += "0123456789";
@@ -16,7 +16,7 @@ const randomString = (length = 5, withNumbers = true) => {
  * @param {Number} max
  * @return {Number} generated random number
  */
-const randomNumber = (max) => Math.floor(Math.random() * (max + 1));
+export const randomNumber = (max) => Math.floor(Math.random() * (max + 1));
 
 /**
  * Subtracts all objB keys from objA keys and returns the result.
@@ -26,7 +26,7 @@ const randomNumber = (max) => Math.floor(Math.random() * (max + 1));
  * @param {Object} objB
  * @return {Object} Object with the diffed values
  */
-const diffKeys = (objA, objB) => {
+export const diffKeys = (objA, objB) => {
 	return Object.keys(objA).reduce((diff, key) => {
 		if (objB.hasOwnProperty(key)) {
 			diff[key] = objA[key] - objB[key];
@@ -35,4 +35,3 @@ const diffKeys = (objA, objB) => {
 	}, {});
 };
 
-module.exports = { randomString, randomNumber, diffKeys };

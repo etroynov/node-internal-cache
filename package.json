@@ -56,18 +56,24 @@
     "node": ">= 18.0.0"
   },
   "scripts": {
-    "test": "nyc mocha src",
+    "test": "nyc ts-mocha --paths src/*.test.ts",
     "lint": "biome check ./src",
-    "build": "rm -rf dist && npx copyfiles -f src/index.js index.d.ts package.json README.md dist"
+    "build": "tsup"
   },
   "dependencies": {
     "clone": "2.1.2"
   },
   "devDependencies": {
+    "tsup": "^8.4.0",
+    "@types/clone": "^2.1.4",
     "@biomejs/biome": "^1.9.4",
     "@types/node": "^18.19.78",
+    "@types/mocha": "^10.0.10",
     "coveralls": "^3.1.1",
     "lodash": "^4.17.21",
+    "tsconfig-paths": "^4.2.0",
+    "ts-mocha": "^11.1.0",
+    "ts-node": "^10.9.2",
     "mocha": "^11.1.0",
     "nyc": "^17.1.0",
     "should": "13.2.3",
