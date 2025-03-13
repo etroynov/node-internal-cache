@@ -14,8 +14,11 @@ import clone from "./clone";
 
 type TTL = number | undefined;
 type Key = string | number;
-type Storage = {
-  [key: string | number]: any;
+type Storage = Record<string | number, any>;
+type ValueSetItem<T = unknown> = {
+  key: Key;
+  val: T;
+  ttl?: number;
 };
 
 class NodeCache extends EventEmitter {
@@ -128,7 +131,7 @@ class NodeCache extends EventEmitter {
     this._checkData();
   }
 
-  get(key: Key) {
+  get<T = unknown>(key: Key): T | undefined {
     if (this._isInvalidKey(key)) {
       throw this._error("EKEYTYPE", { type: typeof key });
     }
@@ -144,7 +147,7 @@ class NodeCache extends EventEmitter {
     return undefined;
   }
 
-  mget(keys: Key) {
+  mget<T>(keys: Key[]): Record<string, T> {
     if (!Array.isArray(keys)) {
       throw this._error("EKEYSTYPE");
     }
@@ -159,20 +162,22 @@ class NodeCache extends EventEmitter {
         this.stats.hits++;
         oRet[key] = this._unwrap(this.data[key]);
       } else {
-        this.emit('miss', keys);
+        this.emit("miss", keys);
         this.stats.misses++;
       }
     }
     return oRet;
   }
 
-  set(key: Key, value: any, ttl?: number) {
+  set<T = unknown>(key: Key, value: T, ttl?: number) {
     if (this.options.maxKeys > -1 && this.stats.keys >= this.options.maxKeys) {
       throw this._error("ECACHEFULL");
     }
 
+    let processedValue: unknown = value;
+
     if (this.options.forceString && typeof value !== "string") {
-      value = JSON.stringify(value);
+      processedValue = JSON.stringify(value);
     }
 
     if (ttl == null) {
@@ -191,13 +196,17 @@ class NodeCache extends EventEmitter {
         this._unwrap(this.data[key], false)
       );
     }
-    this.data[key] = this._wrap(value, ttl);
-    this.stats.vsize += this._getValLength(value);
+
+    this.data[key] = this._wrap(processedValue, ttl);
+    this.stats.vsize += this._getValLength(processedValue);
+
     if (!existent) {
       this.stats.ksize += this._getKeyLength(key);
       this.stats.keys++;
     }
-    this.emit("set", key, value);
+
+    this.emit("set", key, processedValue);
+
     return true;
   }
 
@@ -216,7 +225,7 @@ class NodeCache extends EventEmitter {
     return ret;
   }
 
-  mset(keyValueSet: any) {
+  mset<T = unknown>(keyValueSet: ValueSetItem<T>[]) {
     if (
       this.options.maxKeys > -1 &&
       this.stats.keys + keyValueSet.length >= this.options.maxKeys
@@ -267,8 +276,9 @@ class NodeCache extends EventEmitter {
     return delCount;
   }
 
-  take(key: Key) {
-    const ret = this.get(key);
+  take<T = unknown>(key: Key): T | undefined {
+    const ret = this.get<T>(key);
+
     if (ret != null) {
       this.del(key);
     }
@@ -297,18 +307,13 @@ class NodeCache extends EventEmitter {
     }
   }
 
-  getTtl(key: Key) {
-    if (!key) {
+  getTtl(key: Key): number | undefined {
+    if (!key || this._isInvalidKey(key)) {
       return undefined;
     }
-    if (this._isInvalidKey(key)) {
-      throw this._error("EKEYTYPE", { type: typeof key });
-    }
-    if (this.data[key] != null && this._check(key, this.data[key])) {
-      return this.data[key].t;
-    } else {
-      return undefined;
-    }
+
+    const data = this.data[key];
+    return (data != null && this._check(key, data)) ? data.t : undefined;
   }
 
   keys() {
