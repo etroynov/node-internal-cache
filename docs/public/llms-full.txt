@@ -2,12 +2,6 @@
 
 Simple and fast NodeJS internal caching. A caching module that has `set`, `get` and `delete` methods and works a little bit like memcached. Keys can have a timeout (`ttl`) after which they expire and are deleted from the cache. All keys are stored in a single object so the practical limit is at around 1m keys.
 
-## Why node-internal-cache ?
-
-According to the Declaration to not sell out from the original repository, the `node-cache` package is no longer supported and the authors understandably do not plan to give the repository to other hands, they also recommended that anyone who wants to continue working on the project should create a fork, which is the reason why this project was created.
-
-This project is an important part of our products, but since it is unsupported it is slowly becoming obsolete and requires support and regular maintenance, so it was decided to provide this project with ongoing support.
-
 ## Install
 
 ```bash
@@ -262,33 +256,3 @@ myCache.on("flush_stats", function() {
   // ... do something ...
 });
 ```
-
-## Breaking Changes
-
-### v6.x
-
-- Dropped legacy callback API (`enableLegacyCallbacks` option). Use the synchronous API directly.
-- `ttl(key, 0)` now deletes the key to match the documented semantics.
-- Storage switched from plain object to Map. If you accessed `cache.data[key]` directly, use `cache.data.get(key)` / `cache.data.size` instead.
-- `take` event now emits `(key, value)` instead of `(key)`.
-- Removed hand-written `index.d.ts`. Types are now generated from source.
-- Node.js >= 22 required (native `structuredClone`).
-
-### v5.x
-
-- Callbacks are deprecated. Enable with `enableLegacyCallbacks` option (removed in v6).
-- Dropped support for node versions before 18.x.
-- Rewritten from coffeescript to javascript.
-- Name changed from `node-cache` to `node-internal-cache`.
-
-### v3.x
-
-Variables will now be cloned by default. Disable with `useClones: false`.
-
-### v2.x
-
-Changed `.get()` return format — returns the value directly instead of `{ key: value }`.
-
-## License
-
-MIT License. Copyright © 2025 Evgenii Troinov and the node-cache/node-internal-cache maintainers.
