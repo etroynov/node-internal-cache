@@ -16,7 +16,8 @@ export const randomString = (length = 5, withNumbers = true) => {
  * @param {Number} max
  * @return {Number} generated random number
  */
-export const randomNumber = (max: number) => Math.floor(Math.random() * (max + 1));
+export const randomNumber = (max: number) =>
+	Math.floor(Math.random() * (max + 1));
 
 /**
  * Subtracts all objB keys from objA keys and returns the result.
@@ -27,7 +28,7 @@ export const randomNumber = (max: number) => Math.floor(Math.random() * (max + 1
  * @return {Object} Object with the diffed values
  */
 export const diffKeys = (objA: any, objB: any) => {
-	return Object.keys(objA).reduce((diff, key) => {
+	return Object.keys(objA).reduce((diff: any, key) => {
 		if (objB.hasOwnProperty(key)) {
 			diff[key] = objA[key] - objB[key];
 		}

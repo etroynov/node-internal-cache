@@ -27,7 +27,7 @@ localCache._killCheckPeriod();
 let state = {};
 
 describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => {
-	after(() => {
+	afterAll(() => {
 		let txt = `Benchmark node@${process.version}:`;
 		for (const type in BENCH) {
 			const ops = BENCH[type];
@@ -37,7 +37,7 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 	});
 
 	describe('base', () => {
-		before(() => {
+		beforeAll(() => {
 			localCache.flushAll();
 			state = {
 				start: clone(localCache.getStats()),
@@ -186,33 +186,25 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 			state.obj.should.eql(res2);
 		});
 
-		it('test promise storage (fulfill before adding to cache)', function (done) {
-			const deferred_value = 'Some deferred value';
-			if (typeof Promise !== 'undefined' && Promise !== null) {
+		it('test promise storage (fulfill before adding to cache)', () =>
+			new Promise<void>((resolve) => {
+				const deferred_value = 'Some deferred value';
 				const p = new Promise((fulfill) => fulfill(deferred_value));
 				p.then((value) => {
 					deferred_value.should.eql(value);
 				});
 				localCache.set('promise', p);
 				const q = localCache.get('promise');
-				q.then(() => done());
-			} else {
-				if (process.env.SILENT_MODE == null) {
-					console.log(
-						`No Promises available in this node version (${process.version})`,
-					);
-				}
-				this.skip();
-			}
-		});
+				q.then(() => resolve());
+			}));
 
-		it('test promise storage (fulfill after adding to cache)', function (done) {
-			const deferred_value = 'Some deferred value';
-			if (typeof Promise !== 'undefined' && Promise !== null) {
+		it('test promise storage (fulfill after adding to cache)', () =>
+			new Promise<void>((resolve) => {
+				const deferred_value = 'Some deferred value';
 				let called = 0;
 				const callStub = () => {
 					called++;
-					if (called === 2) done();
+					if (called === 2) resolve();
 				};
 				const p = new Promise((fulfill) =>
 					setTimeout(() => fulfill(deferred_value), 250),
@@ -227,26 +219,9 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 					deferred_value.should.eql(value);
 					callStub();
 				});
-			} else {
-				if (process.env.SILENT_MODE == null) {
-					console.log(
-						`No Promises available in this node version (${process.version})`,
-					);
-				}
-				this.skip();
-			}
-		});
+			}));
 
-		it('test es6 map', function () {
-			if (typeof Map === 'undefined' || Map === null) {
-				if (process.env.SILENT_MODE == null) {
-					console.log(
-						`No Maps available in this node version (${process.version})`,
-					);
-				}
-				this.skip();
-				return;
-			}
+		it('test es6 map', () => {
 			const key = randomString(10);
 			const map = new Map([
 				['firstkey', 'firstvalue'],
@@ -280,7 +255,7 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 	});
 
 	describe('max key amount', () => {
-		before(() => {
+		beforeAll(() => {
 			state = {
 				key1: randomString(10),
 				key2: randomString(10),
@@ -312,7 +287,7 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 
 	describe('correct and incorrect key types', () => {
 		describe('number', () => {
-			before(() => {
+			beforeAll(() => {
 				state = { keys: [], val: randomString(20) };
 				for (let j = 1; j <= 10; j++) {
 					state.keys.push(randomNumber(100000));
@@ -349,17 +324,18 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 				(2).should.eql(count);
 			});
 
-			it('ttl', (done) => {
-				const success = localCache.ttl(state.keys[3], 0.3);
-				true.should.eql(success);
-				let res = localCache.get(state.keys[3]);
-				state.val.should.eql(res);
-				setTimeout(() => {
-					res = localCache.get(state.keys[3]);
-					should.not.exist(res);
-					done();
-				}, 400);
-			});
+			it('ttl', () =>
+				new Promise<void>((resolve) => {
+					const success = localCache.ttl(state.keys[3], 0.3);
+					true.should.eql(success);
+					let res = localCache.get(state.keys[3]);
+					state.val.should.eql(res);
+					setTimeout(() => {
+						res = localCache.get(state.keys[3]);
+						should.not.exist(res);
+						resolve();
+					}, 400);
+				}));
 
 			it('getTtl', () => {
 				const now = Date.now();
@@ -369,13 +345,13 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 				(ttl - now > 485 && ttl - now < 510).should.eql(true);
 			});
 
-			after(() => {
+			afterAll(() => {
 				localCache.flushAll(false);
 			});
 		});
 
 		describe('string', () => {
-			before(() => {
+			beforeAll(() => {
 				state = { keys: [], val: randomString(20) };
 				for (let j = 1; j <= 10; j++) {
 					state.keys.push(randomString(10));
@@ -412,17 +388,18 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 				(2).should.eql(count);
 			});
 
-			it('ttl', (done) => {
-				const success = localCache.ttl(state.keys[3], 0.3);
-				true.should.eql(success);
-				let res = localCache.get(state.keys[3]);
-				state.val.should.eql(res);
-				setTimeout(() => {
-					res = localCache.get(state.keys[3]);
-					should.not.exist(res);
-					done();
-				}, 400);
-			});
+			it('ttl', () =>
+				new Promise<void>((resolve) => {
+					const success = localCache.ttl(state.keys[3], 0.3);
+					true.should.eql(success);
+					let res = localCache.get(state.keys[3]);
+					state.val.should.eql(res);
+					setTimeout(() => {
+						res = localCache.get(state.keys[3]);
+						should.not.exist(res);
+						resolve();
+					}, 400);
+				}));
 
 			it('getTtl', () => {
 				const now = Date.now();
@@ -434,7 +411,7 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 		});
 
 		describe('boolean - invalid type', () => {
-			before(() => {
+			beforeAll(() => {
 				state = { keys: [true, false], val: randomString(20) };
 			});
 
@@ -496,7 +473,7 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 		});
 
 		describe('object - invalid type', () => {
-			before(() => {
+			beforeAll(() => {
 				state = { keys: [{ a: 1 }, { b: 2 }], val: randomString(20) };
 			});
 
@@ -559,7 +536,7 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 	});
 
 	describe('flush', () => {
-		before(() => {
+		beforeAll(() => {
 			state = {
 				n: 0,
 				count: 100,
@@ -585,13 +562,13 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 		it('flush keys', () => {
 			localCache.flushAll(false);
 			(0).should.eql(localCache.getStats().keys);
-			({}).should.eql(localCache.data);
+			(0).should.eql(localCache.data.size);
 		});
 	});
 
 	describe('flushStats', () => {
 		let cache = null;
-		before(() => {
+		beforeAll(() => {
 			cache = new nodeCache();
 		});
 
@@ -610,27 +587,11 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 		});
 	});
 
-	describe('many', () => {
-		before(() => {
-			state = {
-				n: 0,
-				count: 100000,
-				keys: [],
-				val: randomString(20),
-			};
-			for (let j = 1; j <= state.count; j++) {
-				const key = randomString(7);
-				state.keys.push(key);
-			}
-		});
-	});
-
-	describe('delete', function () {
-		this.timeout(0);
-		before(() => {
+	describe('delete', () => {
+		beforeAll(() => {
 			state.n = 0;
 		});
-		before(() => {
+		beforeAll(() => {
 			state = {
 				n: 0,
 				count: 100000,
@@ -644,27 +605,35 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 			}
 		});
 
-		it('delete all previously set keys', () => {
-			for (let i = 0; i < state.count; i++) {
-				(1).should.eql(localCache.del(state.keys[i]));
-				state.n++;
-			}
-			state.n.should.eql(state.count);
-			localCache.getStats().keys.should.eql(0);
-		});
+		it(
+			'delete all previously set keys',
+			() => {
+				for (let i = 0; i < state.count; i++) {
+					(1).should.eql(localCache.del(state.keys[i]));
+					state.n++;
+				}
+				state.n.should.eql(state.count);
+				localCache.getStats().keys.should.eql(0);
+			},
+			0,
+		);
 
-		it('delete keys again; should not delete anything', () => {
-			for (let i = 0; i < state.count; i++) {
-				(0).should.eql(localCache.del(state.keys[i]));
-				state.n++;
-			}
-			state.n.should.eql(state.count * 2);
-			localCache.getStats().keys.should.eql(0);
-		});
+		it(
+			'delete keys again; should not delete anything',
+			() => {
+				for (let i = 0; i < state.count; i++) {
+					(0).should.eql(localCache.del(state.keys[i]));
+					state.n++;
+				}
+				state.n.should.eql(state.count * 2);
+				localCache.getStats().keys.should.eql(0);
+			},
+			0,
+		);
 	});
 
 	describe('stats', () => {
-		before(() => {
+		beforeAll(() => {
 			state = {
 				n: 0,
 				start: clone(localCache.getStats()),
@@ -717,7 +686,7 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 	});
 
 	describe('multi', () => {
-		before(() => {
+		beforeAll(() => {
 			state = {
 				n: 0,
 				count: 100,
@@ -775,7 +744,7 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 	});
 
 	describe('ttl', () => {
-		before(() => {
+		beforeAll(() => {
 			state = {
 				n: 0,
 				val: randomString(20),
@@ -799,25 +768,27 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 				true.should.eql(localCacheTTL.has(state.key6));
 			});
 
-			it('before it times out', (done) => {
-				setTimeout(() => {
-					state.n++;
-					const res = localCacheTTL.has(state.key6);
-					res.should.eql(true);
-					state.val.should.eql(localCacheTTL.get(state.key6));
-					done();
-				}, 20);
-			});
+			it('before it times out', () =>
+				new Promise<void>((resolve) => {
+					setTimeout(() => {
+						state.n++;
+						const res = localCacheTTL.has(state.key6);
+						res.should.eql(true);
+						state.val.should.eql(localCacheTTL.get(state.key6));
+						resolve();
+					}, 20);
+				}));
 
-			it('and after it timed out', (done) => {
-				setTimeout(() => {
-					const res = localCacheTTL.has(state.key6);
-					res.should.eql(false);
-					state.n++;
-					should(localCacheTTL.get(state.key6)).be.undefined();
-					done();
-				}, 800);
-			});
+			it('and after it timed out', () =>
+				new Promise<void>((resolve) => {
+					setTimeout(() => {
+						const res = localCacheTTL.has(state.key6);
+						res.should.eql(false);
+						state.n++;
+						should(localCacheTTL.get(state.key6)).be.undefined();
+						resolve();
+					}, 800);
+				}));
 		});
 
 		it('set a key with ttl', () => {
@@ -833,27 +804,29 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 			state.val.should.eql(localCache.get(state.key1));
 		});
 
-		it('before it times out', (done) => {
-			setTimeout(() => {
-				state.n++;
-				const res = localCache.has(state.key1);
-				res.should.eql(true);
-				state.val.should.eql(localCache.get(state.key1));
-				done();
-			}, 20);
-		});
+		it('before it times out', () =>
+			new Promise<void>((resolve) => {
+				setTimeout(() => {
+					state.n++;
+					const res = localCache.has(state.key1);
+					res.should.eql(true);
+					state.val.should.eql(localCache.get(state.key1));
+					resolve();
+				}, 20);
+			}));
 
-		it('and after it timed out', (done) => {
-			setTimeout(() => {
-				const res = localCache.has(state.key1);
-				res.should.eql(false);
-				const ts = localCache.getTtl(state.key1);
-				should.not.exist(ts);
-				state.n++;
-				should(localCache.get(state.key1)).be.undefined();
-				done();
-			}, 700);
-		});
+		it('and after it timed out', () =>
+			new Promise<void>((resolve) => {
+				setTimeout(() => {
+					const res = localCache.has(state.key1);
+					res.should.eql(false);
+					const ts = localCache.getTtl(state.key1);
+					should.not.exist(ts);
+					state.n++;
+					should(localCache.get(state.key1)).be.undefined();
+					resolve();
+				}, 700);
+			}));
 
 		it('set another key with ttl', () => {
 			const res = localCache.set(state.key2, state.val, 0.5);
@@ -865,36 +838,41 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 			state.val.should.eql(res);
 		});
 
-		it('before it times out', (done) => {
-			setTimeout(() => {
-				state.n++;
-				state.val.should.eql(localCache.get(state.key2));
-				done();
-			}, 20);
-		});
+		it('before it times out', () =>
+			new Promise<void>((resolve) => {
+				setTimeout(() => {
+					state.n++;
+					state.val.should.eql(localCache.get(state.key2));
+					resolve();
+				}, 20);
+			}));
 
-		it('and after it timed out, too', (done) => {
-			setTimeout(() => {
-				const ts = localCache.getTtl(state.key2);
-				should.not.exist(ts);
-				state.n++;
-				should(localCache.get(state.key2)).be.undefined();
-				done();
-			}, 500);
-		});
+		it('and after it timed out, too', () =>
+			new Promise<void>((resolve) => {
+				setTimeout(() => {
+					const ts = localCache.getTtl(state.key2);
+					should.not.exist(ts);
+					state.n++;
+					should(localCache.get(state.key2)).be.undefined();
+					resolve();
+				}, 500);
+			}));
 
 		describe('test the automatic check', () => {
 			let innerState = null;
-			before((done) => {
-				setTimeout(() => {
-					innerState = {
-						startKeys: localCache.getStats().keys,
-						key: 'autotest',
-						val: randomString(20),
-					};
-					done();
-				}, 1000);
-			});
+			beforeAll(
+				() =>
+					new Promise<void>((resolve) => {
+						setTimeout(() => {
+							innerState = {
+								startKeys: localCache.getStats().keys,
+								key: 'autotest',
+								val: randomString(20),
+							};
+							resolve();
+						}, 1000);
+					}),
+			);
 
 			it('set a key with ttl', () => {
 				localCache.once('set', (key) => {
@@ -909,17 +887,18 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 				innerState.val.should.eql(localCache.get(innerState.key));
 			});
 
-			it("wait for 'expired' event", (done) => {
-				localCache.once('expired', (key, val) => {
-					innerState.key.should.eql(key);
-					(indexOf.call(state.keys, key) < 0).should.eql(true);
-					should(localCache.data[key]).be.undefined();
-					done();
-				});
-				setTimeout(() => {
-					localCache._checkData(false);
-				}, 550);
-			});
+			it("wait for 'expired' event", () =>
+				new Promise<void>((resolve) => {
+					localCache.once('expired', (key, val) => {
+						innerState.key.should.eql(key);
+						(indexOf.call(state.keys, key) < 0).should.eql(true);
+						should(localCache.data.get(key)).be.undefined();
+						resolve();
+					});
+					setTimeout(() => {
+						localCache._checkData(false);
+					}, 550);
+				}));
 		});
 
 		describe('more ttl tests', () => {
@@ -944,14 +923,15 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 				state.val.should.eql(res);
 			});
 
-			it('wait until ttl has ended and check if the key was deleted', (done) => {
-				setTimeout(() => {
-					const res = localCache.get(state.key3);
-					should(res).be.undefined();
-					should(localCache.data[state.key3]).be.undefined();
-					done();
-				}, 500);
-			});
+			it('wait until ttl has ended and check if the key was deleted', () =>
+				new Promise<void>((resolve) => {
+					setTimeout(() => {
+						const res = localCache.get(state.key3);
+						should(res).be.undefined();
+						should(localCache.data.get(state.key3)).be.undefined();
+						resolve();
+					}, 500);
+				}));
 
 			it('set a key with ttl = 100s (default: infinite), reset its ttl to default and check if it still exists', () => {
 				const res = localCache.set(state.key4, state.val, 100);
@@ -963,61 +943,71 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 				state.val.should.eql(res2);
 			});
 
-			it('set a key with ttl = 100s (default: 0.3s), reset its ttl to default, check if it still exists, and wait for its timeout', (done) => {
-				true.should.eql(localCacheTTL.set(state.key5, state.val, 100));
-				state.val.should.eql(localCacheTTL.get(state.key5));
-				false.should.eql(localCacheTTL.ttl(`${state.key5}false`));
-				true.should.eql(localCacheTTL.ttl(state.key5));
-				state.val.should.eql(localCacheTTL.get(state.key5));
-				setTimeout(() => {
-					const res = localCacheTTL.get(state.key5);
-					should.not.exist(res);
-					localCacheTTL._checkData(false);
-					should(localCacheTTL.data[state.key5]).be.undefined();
-					done();
-				}, 350);
-			});
+			it('set a key with ttl = 100s (default: 0.3s), reset its ttl to default, check if it still exists, and wait for its timeout', () =>
+				new Promise<void>((resolve) => {
+					true.should.eql(localCacheTTL.set(state.key5, state.val, 100));
+					state.val.should.eql(localCacheTTL.get(state.key5));
+					false.should.eql(localCacheTTL.ttl(`${state.key5}false`));
+					true.should.eql(localCacheTTL.ttl(state.key5));
+					state.val.should.eql(localCacheTTL.get(state.key5));
+					setTimeout(() => {
+						const res = localCacheTTL.get(state.key5);
+						should.not.exist(res);
+						localCacheTTL._checkData(false);
+						should(localCacheTTL.data.get(state.key5)).be.undefined();
+						resolve();
+					}, 350);
+				}));
 
-			it('set a key with a cache initialized with no automatic delete on expire', (done) => {
-				localCacheNoDelete.set(state.key1, state.val);
-				setTimeout(() => {
-					const res = localCacheNoDelete.get(state.key1);
-					should(res).eql(state.val);
-					done();
-				}, 500);
-			});
+			it('set a key with a cache initialized with no automatic delete on expire', () =>
+				new Promise<void>((resolve) => {
+					localCacheNoDelete.set(state.key1, state.val);
+					setTimeout(() => {
+						const res = localCacheNoDelete.get(state.key1);
+						should(res).eql(state.val);
+						resolve();
+					}, 500);
+				}));
 
-			it('test issue #78 with expire event not fired', function (done) {
-				this.timeout(6000);
-				const localCacheTTL2 = new nodeCache({ stdTTL: 1, checkperiod: 0.5 });
-				let expCount = 0;
-				const expkeys = ['ext78_test:a', 'ext78_test:b'];
-				localCacheTTL2.set(expkeys[0], expkeys[0], 2);
-				localCacheTTL2.set(expkeys[1], expkeys[1], 3);
-				localCacheTTL2.on('expired', (key, value) => {
-					key.should.eql(expkeys[expCount]);
-					value.should.eql(expkeys[expCount]);
-					expCount++;
-				});
-				setTimeout(() => {
-					expCount.should.eql(2);
-					localCacheTTL2.close();
-					done();
-				}, 5000);
-			});
+			it(
+				'test issue #78 with expire event not fired',
+				() =>
+					new Promise<void>((resolve) => {
+						const localCacheTTL2 = new nodeCache({
+							stdTTL: 1,
+							checkperiod: 0.5,
+						});
+						let expCount = 0;
+						const expkeys = ['ext78_test:a', 'ext78_test:b'];
+						localCacheTTL2.set(expkeys[0], expkeys[0], 2);
+						localCacheTTL2.set(expkeys[1], expkeys[1], 3);
+						localCacheTTL2.on('expired', (key, value) => {
+							key.should.eql(expkeys[expCount]);
+							value.should.eql(expkeys[expCount]);
+							expCount++;
+						});
+						setTimeout(() => {
+							expCount.should.eql(2);
+							localCacheTTL2.close();
+							resolve();
+						}, 5000);
+					}),
+				6000,
+			);
 		});
 	});
 
 	describe('clone', () => {
-		it('a function', (done) => {
-			const key = randomString(10);
-			const value = () => {
-				done();
-			};
-			localCache.set(key, value);
-			const fn = localCache.get(key);
-			fn();
-		});
+		it('a function', () =>
+			new Promise<void>((resolve) => {
+				const key = randomString(10);
+				const value = () => {
+					resolve();
+				};
+				localCache.set(key, value);
+				const fn = localCache.get(key);
+				fn();
+			}));
 
 		it('a regex', () => {
 			const key = randomString(10);
@@ -1034,7 +1024,7 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 	});
 
 	describe('mset', () => {
-		before(() => {
+		beforeAll(() => {
 			state = {
 				keyValueSet: [
 					{ key: randomString(10), val: randomString(10) },
@@ -1093,33 +1083,33 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 			state = { func: () => 'foo' };
 		});
 
-		context('when value is type of Function', () => {
+		describe('when value is type of Function', () => {
 			it('execute it and fetch returned value', () => {
 				'foo'.should.eql(localCache.fetch('key', 100, state.func));
 			});
 		});
 
-		context('when value is not a function', () => {
+		describe('when value is not a function', () => {
 			it('return the value itself', () => {
 				'bar'.should.eql(localCache.fetch('key', 100, 'bar'));
 			});
 		});
 
-		context('cache hit', () => {
+		describe('cache hit', () => {
 			it('return cached value', () => {
 				localCache.set('key', 'bar', 100);
 				'bar'.should.eql(localCache.fetch('key', 100, state.func));
 			});
 		});
 
-		context('cache miss', () => {
+		describe('cache miss', () => {
 			it('write given value to cache and return it', () => {
 				'foo'.should.eql(localCache.fetch('key', 100, state.func));
 				'foo'.should.eql(localCache.get('key'));
 			});
 		});
 
-		context('when ttl is omitted', () => {
+		describe('when ttl is omitted', () => {
 			it('swap ttl and value', () => {
 				'foo'.should.eql(localCache.fetch('key', state.func));
 			});
@@ -1129,7 +1119,7 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 	describe('Issues', () => {
 		describe('#151 - cannot set null', () => {
 			let cache = null;
-			before(() => {
+			beforeAll(() => {
 				cache = new nodeCache();
 			});
 			it('set the value `null` - this should not throw or otherwise fail', () => {
@@ -1143,7 +1133,7 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 		describe('#197 - ReferenceError: Buffer is not defined', () => {
 			let cache = null;
 			const globalBuffer = global.Buffer;
-			before(() => {
+			beforeAll(() => {
 				global.Buffer = undefined;
 				cache = new nodeCache();
 			});
@@ -1151,7 +1141,7 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 				should(Buffer).be.undefined();
 				cache.set('foo', {});
 			});
-			after(() => {
+			afterAll(() => {
 				global.Buffer = globalBuffer;
 				should(Buffer).eql(globalBuffer);
 			});
@@ -1159,7 +1149,7 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 
 		describe('#263 - forceString never works', () => {
 			let cache = null;
-			before(() => {
+			beforeAll(() => {
 				cache = new nodeCache({ forceString: true });
 			});
 			it('set the value `null` - this should transform into a string', () => {
@@ -1170,6 +1160,87 @@ describe(`\`${pkg.name}@${pkg.version}\` on \`node@${process.version}\``, () => 
 				cache.set('test', { hello: 'World' });
 				should(cache.get('test')).eql('{"hello":"World"}');
 			});
+		});
+	});
+
+	describe('regression', () => {
+		it('get("toString") on a fresh cache returns undefined', () => {
+			const cache = new nodeCache();
+			should(cache.get('toString')).be.undefined();
+			should(cache.get('hasOwnProperty')).be.undefined();
+			should(cache.get('__proto__')).be.undefined();
+		});
+
+		it('mget emits "miss" with the single missing key (not the full keys array)', () => {
+			const cache = new nodeCache();
+			cache.set('present', 1);
+			const missed: unknown[] = [];
+			cache.on('miss', (k) => missed.push(k));
+			cache.mget(['present', 'absent-a', 'absent-b']);
+			missed.should.eql(['absent-a', 'absent-b']);
+		});
+
+		it('ttl(key, 0) deletes the key', () => {
+			const cache = new nodeCache({ stdTTL: 0 });
+			cache.set('k', 'v', 100);
+			cache.has('k').should.be.true();
+			cache.ttl('k', 0).should.be.true();
+			cache.has('k').should.be.false();
+		});
+
+		it('take on a missing key does not emit "take"', () => {
+			const cache = new nodeCache();
+			let emitted = false;
+			cache.on('take', () => {
+				emitted = true;
+			});
+			const res = cache.take('missing');
+			should(res).be.undefined();
+			emitted.should.be.false();
+		});
+
+		it('mset off-by-one: maxKeys=N permits exactly N keys', () => {
+			const cache = new nodeCache({ maxKeys: 3 });
+			cache.mset([
+				{ key: 'a', val: 1 },
+				{ key: 'b', val: 2 },
+				{ key: 'c', val: 3 },
+			]);
+			cache.getStats().keys.should.eql(3);
+		});
+
+		it('set(key, undefined) round-trips as undefined', () => {
+			const cache = new nodeCache();
+			cache.set('u', undefined);
+			cache.has('u').should.be.true();
+			should(cache.get('u')).be.undefined();
+		});
+
+		it('set/ttl reject NaN ttl with ETTLTYPE', () => {
+			const cache = new nodeCache();
+			(() => cache.set('k', 'v', Number.NaN)).should.throw({
+				name: 'ETTLTYPE',
+			});
+		});
+
+		it('fetchAsync deduplicates concurrent misses', async () => {
+			const cache = new nodeCache();
+			let calls = 0;
+			const fn = async () => {
+				calls++;
+				await new Promise((r) => setTimeout(r, 20));
+				return 'hello';
+			};
+			const [a, b, c] = await Promise.all([
+				cache.fetchAsync('shared', 100, fn),
+				cache.fetchAsync('shared', 100, fn),
+				cache.fetchAsync('shared', 100, fn),
+			]);
+			a.should.eql('hello');
+			b.should.eql('hello');
+			c.should.eql('hello');
+			calls.should.eql(1);
+			cache.get('shared').should.eql('hello');
 		});
 	});
 });

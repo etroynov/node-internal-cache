@@ -1,475 +1,526 @@
 /**
- * node-internal-cache 5.5.0 ( 2025-03-01 )
+ * node-internal-cache
  * https://github.com/etroynov/node-internal-cache
  *
  * Released under the MIT license
  * https://github.com/etroynov/node-internal-cache/blob/master/LICENSE
- *
- * Maintained by  ( Evgenii Troinov<troinof@gmail.com> )
  */
 
-import { EventEmitter } from "node:events";
+import { EventEmitter } from 'node:events';
 
-import clone from "./clone";
+import clone from './clone';
 
-type TTL = number | undefined;
-type Key = string | number;
-type Storage = Record<string | number, any>;
-type ValueSetItem<T = unknown> = {
-  key: Key;
-  val: T;
-  ttl?: number;
+export type Key = string | number;
+
+export interface WrappedValue<T> {
+	/** absolute expiration timestamp in ms; 0 means never expires */
+	t: number;
+	/** stored value */
+	v: T;
+	/** marker so set(key, undefined) round-trips correctly */
+	hasValue: boolean;
+}
+
+export interface ValueSetItem<T = unknown> {
+	key: Key;
+	val: T;
+	ttl?: number;
+}
+
+export interface Stats {
+	hits: number;
+	misses: number;
+	keys: number;
+	ksize: number;
+	vsize: number;
+}
+
+export interface Options {
+	forceString?: boolean;
+	objectValueSize?: number;
+	promiseValueSize?: number;
+	arrayValueSize?: number;
+	stdTTL?: number;
+	checkperiod?: number;
+	useClones?: boolean;
+	deleteOnExpire?: boolean;
+	maxKeys?: number;
+}
+
+type ErrorCode =
+	| 'ENOTFOUND'
+	| 'ECACHEFULL'
+	| 'EKEYTYPE'
+	| 'EKEYSTYPE'
+	| 'ETTLTYPE';
+
+export interface CacheError extends Error {
+	name: string;
+	errorcode: string;
+	data: { type?: string };
+}
+
+const ERROR_TEMPLATES: Record<ErrorCode, string> = {
+	ENOTFOUND: 'Key `__key` not found',
+	ECACHEFULL: 'Cache max keys amount exceeded',
+	EKEYTYPE:
+		'The key argument has to be of type `string` or `number`. Found: `__key`',
+	EKEYSTYPE: 'The keys argument has to be an array.',
+	ETTLTYPE: 'The ttl argument has to be a number.',
 };
 
-class NodeCache extends EventEmitter {
-  /* Cache storage */
-  data: Storage = {};
+const VALID_KEY_TYPES = ['string', 'number'] as const;
+const MS_PER_SEC = 1000;
+const NEVER_EXPIRES = 0;
 
-  /* Allowed key types */
-  validKeyTypes = ["string", "number"];
+const emptyStats = (): Stats => ({
+	hits: 0,
+	misses: 0,
+	keys: 0,
+	ksize: 0,
+	vsize: 0,
+});
 
-  /* Container for statistics */
-  stats = {
-    hits: 0,
-    misses: 0,
-    keys: 0,
-    ksize: 0,
-    vsize: 0,
-  };
+export type NodeCacheEvents = {
+	set: [key: Key, value: unknown];
+	del: [key: Key, value: unknown];
+	expired: [key: Key, value: unknown];
+	miss: [key: Key];
+	take: [key: Key, value: unknown];
+	flush: [];
+	flush_stats: [];
+};
 
-  /* Default options */
-  options = {
-    forceString: false,
-    objectValueSize: 80,
-    promiseValueSize: 80,
-    arrayValueSize: 40,
-    stdTTL: 0,
-    checkperiod: 600,
-    useClones: true,
-    deleteOnExpire: true,
-    enableLegacyCallbacks: false,
-    maxKeys: -1,
-  };
+interface TypedEventEmitter<E> {
+	on<K extends keyof E & string>(
+		event: K,
+		listener: (...args: E[K] extends unknown[] ? E[K] : never) => void,
+	): this;
+	once<K extends keyof E & string>(
+		event: K,
+		listener: (...args: E[K] extends unknown[] ? E[K] : never) => void,
+	): this;
+	off<K extends keyof E & string>(
+		event: K,
+		listener: (...args: E[K] extends unknown[] ? E[K] : never) => void,
+	): this;
+	emit<K extends keyof E & string>(
+		event: K,
+		...args: E[K] extends unknown[] ? E[K] : never
+	): boolean;
+}
 
-  /* Define standard error messages as a prototype property */
-  _ERRORS: {
-    [key: string]: string;
-  } = {
-    ENOTFOUND: "Key `__key` not found",
-    ECACHEFULL: "Cache max keys amount exceeded",
-    EKEYTYPE:
-      "The key argument has to be of type `string` or `number`. Found: `__key`",
-    EKEYSTYPE: "The keys argument has to be an array.",
-    ETTLTYPE: "The ttl argument has to be a number.",
-  };
-  checkTimeout: any;
-  ERRORS: any;
+class NodeCache extends (EventEmitter as new () => EventEmitter &
+	TypedEventEmitter<NodeCacheEvents>) {
+	/** Cache storage */
+	data = new Map<Key, WrappedValue<unknown>>();
 
-  constructor(options = {}) {
-    super();
+	/** Statistics container */
+	stats: Stats = emptyStats();
 
-    // Bind all public methods to the instance
-    this.get = this.get.bind(this);
-    this.mget = this.mget.bind(this);
-    this.set = this.set.bind(this);
-    this.fetch = this.fetch.bind(this);
-    this.mset = this.mset.bind(this);
-    this.del = this.del.bind(this);
-    this.take = this.take.bind(this);
-    this.ttl = this.ttl.bind(this);
-    this.getTtl = this.getTtl.bind(this);
-    this.keys = this.keys.bind(this);
-    this.has = this.has.bind(this);
-    this.getStats = this.getStats.bind(this);
-    this.flushAll = this.flushAll.bind(this);
-    this.flushStats = this.flushStats.bind(this);
-    this.close = this.close.bind(this);
-    this._checkData = this._checkData.bind(this);
-    this._check = this._check.bind(this);
-    this._isInvalidKey = this._isInvalidKey.bind(this);
-    this._wrap = this._wrap.bind(this);
-    this._getValLength = this._getValLength.bind(this);
-    this._error = this._error.bind(this);
-    this._initErrors = this._initErrors.bind(this);
+	/** Resolved options */
+	options: Required<Options> = {
+		forceString: false,
+		objectValueSize: 80,
+		promiseValueSize: 80,
+		arrayValueSize: 40,
+		stdTTL: 0,
+		checkperiod: 600,
+		useClones: true,
+		deleteOnExpire: true,
+		maxKeys: -1,
+	};
 
-    this._initErrors();
+	private checkTimeout: NodeJS.Timeout | undefined;
+	private inflight = new Map<Key, Promise<unknown>>();
 
-    // Default options
-    this.options = {
-      ...this.options,
-      ...options,
-    };
+	constructor(options: Options = {}) {
+		super();
 
-    // Legacy callback support (to be removed in the future)
-    if (this.options.enableLegacyCallbacks) {
-      console.warn(
-        "WARNING! node-cache legacy callback support will drop in v6.x"
-      );
-      ["get", "mget", "set", "del", "ttl", "getTtl", "keys", "has"].forEach(
-        (methodKey) => {
-          // @ts-ignore
-          const oldMethod = this[methodKey];
-          // @ts-ignore
-          this[methodKey] = (...args) => {
-            const cb = args.pop();
-            if (typeof cb === "function") {
-              try {
-                const res = oldMethod(...args);
-                cb(null, res);
-              } catch (err) {
-                cb(err);
-              }
-            } else {
-              return oldMethod(...args, cb);
-            }
-          };
-        }
-      );
-    }
+		this.options = { ...this.options, ...options };
 
-    // Start periodic data check
-    this._checkData();
-  }
+		this._checkData();
+	}
 
-  get<T = unknown>(key: Key): T | undefined {
-    if (this._isInvalidKey(key)) {
-      throw this._error("EKEYTYPE", { type: typeof key });
-    }
+	get<T = unknown>(key: Key): T | undefined {
+		this._assertKey(key);
 
-    if (this.data[key] != null && this._check(key, this.data[key])) {
-      this.stats.hits++;
-      return this._unwrap(this.data[key]);
-    }
+		const entry = this._liveEntry(key);
+		if (entry !== undefined) {
+			this.stats.hits++;
+			return this._unwrap<T>(entry);
+		}
 
-    this.emit("miss", key);
-    this.stats.misses++;
+		this.emit('miss', key);
+		this.stats.misses++;
+		return undefined;
+	}
 
-    return undefined;
-  }
+	mget<T = unknown>(keys: Key[]): Record<string, T> {
+		if (!Array.isArray(keys)) {
+			throw this._error('EKEYSTYPE');
+		}
 
-  mget<T>(keys: Key[]): Record<string, T> {
-    if (!Array.isArray(keys)) {
-      throw this._error("EKEYSTYPE");
-    }
+		const out: Record<string, T> = {};
+		for (const key of keys) {
+			this._assertKey(key);
 
-    const oRet: Storage = {};
-    for (const key of keys) {
-      if (this._isInvalidKey(key)) {
-        throw this._error("EKEYTYPE", { type: typeof key });
-      }
+			const entry = this._liveEntry(key);
+			if (entry !== undefined) {
+				this.stats.hits++;
+				out[String(key)] = this._unwrap<T>(entry) as T;
+			} else {
+				this.emit('miss', key);
+				this.stats.misses++;
+			}
+		}
+		return out;
+	}
 
-      if (this.data[key] != null && this._check(key, this.data[key])) {
-        this.stats.hits++;
-        oRet[key] = this._unwrap(this.data[key]);
-      } else {
-        this.emit("miss", keys);
-        this.stats.misses++;
-      }
-    }
-    return oRet;
-  }
+	set<T = unknown>(key: Key, value: T, ttl?: number): boolean {
+		this._assertKey(key);
+		this._assertTtl(ttl);
 
-  set<T = unknown>(key: Key, value: T, ttl?: number) {
-    if (this.options.maxKeys > -1 && this.stats.keys >= this.options.maxKeys) {
-      throw this._error("ECACHEFULL");
-    }
+		if (
+			this.options.maxKeys > -1 &&
+			this.stats.keys >= this.options.maxKeys &&
+			!this.data.has(key)
+		) {
+			throw this._error('ECACHEFULL');
+		}
 
-    let processedValue: unknown = value;
+		const processedValue =
+			this.options.forceString && typeof value !== 'string'
+				? JSON.stringify(value)
+				: value;
 
-    if (this.options.forceString && typeof value !== "string") {
-      processedValue = JSON.stringify(value);
-    }
+		const existing = this.data.get(key);
+		if (existing !== undefined) {
+			this.stats.vsize -= this._getValLength(this._unwrap(existing, false));
+		} else {
+			this.stats.ksize += this._getKeyLength(key);
+			this.stats.keys++;
+		}
 
-    if (ttl == null) {
-      ttl = this.options.stdTTL;
-    }
+		this.data.set(key, this._wrap(processedValue, this._resolveExpiry(ttl)));
+		this.stats.vsize += this._getValLength(processedValue);
 
-    if (this._isInvalidKey(key)) {
-      throw this._error("EKEYTYPE", { type: typeof key });
-    }
+		this.emit('set', key, processedValue);
+		return true;
+	}
 
-    let existent = false;
+	fetch<T = unknown>(
+		key: Key,
+		ttlOrValue: number | T | (() => T),
+		maybeValue?: T | (() => T),
+	): T {
+		if (this.has(key)) {
+			return this.get<T>(key) as T;
+		}
 
-    if (this.data[key]) {
-      existent = true;
-      this.stats.vsize -= this._getValLength(
-        this._unwrap(this.data[key], false)
-      );
-    }
+		const { ttl, value } = this._parseFetchArgs<T | (() => T)>(
+			ttlOrValue,
+			maybeValue,
+		);
+		const result = (
+			typeof value === 'function' ? (value as () => T)() : value
+		) as T;
+		this.set(key, result, ttl);
+		return result;
+	}
 
-    this.data[key] = this._wrap(processedValue, ttl);
-    this.stats.vsize += this._getValLength(processedValue);
+	async fetchAsync<T>(
+		key: Key,
+		ttlOrFn: number | (() => Promise<T> | T),
+		maybeFn?: () => Promise<T> | T,
+	): Promise<T> {
+		if (this.has(key)) {
+			return this.get<T>(key) as T;
+		}
 
-    if (!existent) {
-      this.stats.ksize += this._getKeyLength(key);
-      this.stats.keys++;
-    }
+		const existing = this.inflight.get(key);
+		if (existing !== undefined) {
+			return existing as Promise<T>;
+		}
 
-    this.emit("set", key, processedValue);
+		const { ttl, value: fn } = this._parseFetchArgs<() => Promise<T> | T>(
+			ttlOrFn,
+			maybeFn,
+		);
 
-    return true;
-  }
+		// Populate the cache before clearing inflight so that any concurrent
+		// caller arriving after the await sees either the inflight promise or
+		// the freshly populated cache entry, never neither.
+		const promise = Promise.resolve()
+			.then(fn)
+			.then((result) => {
+				this.set(key, result, ttl);
+				return result;
+			})
+			.finally(() => {
+				this.inflight.delete(key);
+			});
 
-  fetch(key: Key, ttl?: number | undefined, value?: any) {
-    if (this.has(key)) {
-      return this.get(key);
-    }
+		this.inflight.set(key, promise);
+		return promise;
+	}
 
-    if (typeof value === "undefined") {
-      value = ttl;
-      ttl = undefined;
-    }
+	mset<T = unknown>(keyValueSet: ValueSetItem<T>[]): boolean {
+		if (
+			this.options.maxKeys > -1 &&
+			this.stats.keys + keyValueSet.length > this.options.maxKeys
+		) {
+			throw this._error('ECACHEFULL');
+		}
 
-    const ret = typeof value === "function" ? value() : value;
-    this.set(key, ret, ttl);
-    return ret;
-  }
+		for (const { key, ttl } of keyValueSet) {
+			if (ttl !== undefined && typeof ttl !== 'number') {
+				throw this._error('ETTLTYPE');
+			}
+			this._assertKey(key);
+		}
+		for (const { key, val, ttl } of keyValueSet) {
+			this.set(key, val, ttl);
+		}
+		return true;
+	}
 
-  mset<T = unknown>(keyValueSet: ValueSetItem<T>[]) {
-    if (
-      this.options.maxKeys > -1 &&
-      this.stats.keys + keyValueSet.length >= this.options.maxKeys
-    ) {
-      throw this._error("ECACHEFULL");
-    }
+	del(keys: Key | Key[]): number {
+		const arr = Array.isArray(keys) ? keys : [keys];
 
-    // Input array validation
-    for (const keyValuePair of keyValueSet) {
-      const { key, val, ttl } = keyValuePair;
-      if (ttl && typeof ttl !== "number") {
-        throw this._error("ETTLTYPE");
-      }
-      if (this._isInvalidKey(key)) {
-        throw this._error("EKEYTYPE", { type: typeof key });
-      }
-    }
-    for (const keyValuePair of keyValueSet) {
-      const { key, val, ttl } = keyValuePair;
-      this.set(key, val, ttl);
-    }
-    return true;
-  }
+		let delCount = 0;
+		for (const key of arr) {
+			this._assertKey(key);
+			const entry = this.data.get(key);
+			if (entry !== undefined) {
+				this.stats.vsize -= this._getValLength(this._unwrap(entry, false));
+				this.stats.ksize -= this._getKeyLength(key);
+				this.stats.keys--;
+				delCount++;
+				this.data.delete(key);
+				this.emit('del', key, entry.v);
+			}
+		}
+		return delCount;
+	}
 
-  del(keys: Key | Key[]) {
-    if (!Array.isArray(keys)) {
-      keys = [keys];
-    }
+	take<T = unknown>(key: Key): T | undefined {
+		this._assertKey(key);
 
-    let delCount = 0;
+		const entry = this._liveEntry(key);
+		if (entry === undefined) {
+			this.emit('miss', key);
+			this.stats.misses++;
+			return undefined;
+		}
 
-    for (const key of keys) {
-      if (this._isInvalidKey(key)) {
-        throw this._error("EKEYTYPE", { type: typeof key });
-      }
-      if (this.data[key] != null) {
-        this.stats.vsize -= this._getValLength(
-          this._unwrap(this.data[key], false)
-        );
-        this.stats.ksize -= this._getKeyLength(key);
-        this.stats.keys--;
-        delCount++;
-        const oldVal = this.data[key];
-        delete this.data[key];
-        this.emit("del", key, oldVal.v);
-      }
-    }
-    return delCount;
-  }
+		this.stats.hits++;
+		const value = this._unwrap<T>(entry);
+		this.del(key);
+		this.emit('take', key, value);
+		return value;
+	}
 
-  take<T = unknown>(key: Key): T | undefined {
-    const ret = this.get<T>(key);
+	ttl(key: Key, ttl?: number): boolean {
+		if (!key) return false;
+		this._assertKey(key);
+		this._assertTtl(ttl);
 
-    if (ret != null) {
-      this.del(key);
-    }
+		const entry = this._liveEntry(key);
+		if (entry === undefined) return false;
 
-    this.emit("take", key);
-    return ret;
-  }
+		// Explicit `0` is treated as "drop the key" per documented semantics.
+		if (ttl === 0) {
+			this.del(key);
+			return true;
+		}
 
-  ttl(key: Key, ttl?: TTL) {
-    ttl = ttl || this.options.stdTTL;
-    if (!key) {
-      return false;
-    }
-    if (this._isInvalidKey(key)) {
-      throw this._error("EKEYTYPE", { type: typeof key });
-    }
-    if (this.data[key] != null && this._check(key, this.data[key])) {
-      if (ttl >= 0) {
-        this.data[key] = this._wrap(this.data[key].v, ttl, false);
-      } else {
-        this.del(key);
-      }
-      return true;
-    } else {
-      return false;
-    }
-  }
+		const expiry = this._resolveExpiry(ttl);
+		if (ttl !== undefined && ttl < 0) {
+			this.del(key);
+			return true;
+		}
 
-  getTtl(key: Key): number | undefined {
-    if (!key || this._isInvalidKey(key)) {
-      return undefined;
-    }
+		this.data.set(key, this._wrap(entry.v, expiry, false));
+		return true;
+	}
 
-    const data = this.data[key];
-    return (data != null && this._check(key, data)) ? data.t : undefined;
-  }
+	getTtl(key: Key): number | undefined {
+		this._assertKey(key);
+		if (!key) return undefined;
+		const entry = this._liveEntry(key);
+		return entry?.t;
+	}
 
-  keys() {
-    return Object.keys(this.data);
-  }
+	keys(): string[] {
+		return Array.from(this.data.keys(), (k) => String(k));
+	}
 
-  has(key: Key) {
-    return this.data[key] != null && this._check(key, this.data[key]);
-  }
+	has(key: Key): boolean {
+		return this._liveEntry(key) !== undefined;
+	}
 
-  getStats() {
-    return this.stats;
-  }
+	getStats(): Stats {
+		return this.stats;
+	}
 
-  flushAll(_startPeriod = true) {
-    this.data = {};
-    this.stats = { hits: 0, misses: 0, keys: 0, ksize: 0, vsize: 0 };
-    this._killCheckPeriod();
-    this._checkData(_startPeriod);
-    this.emit("flush");
-  }
+	flushAll(startPeriod = true): void {
+		this.data = new Map();
+		this.stats = emptyStats();
+		this._killCheckPeriod();
+		this._checkData(startPeriod);
+		this.emit('flush');
+	}
 
-  flushStats() {
-    this.stats = { hits: 0, misses: 0, keys: 0, ksize: 0, vsize: 0 };
-    this.emit("flush_stats");
-  }
+	flushStats(): void {
+		this.stats = emptyStats();
+		this.emit('flush_stats');
+	}
 
-  close() {
-    this._killCheckPeriod();
-  }
+	close(): void {
+		this._killCheckPeriod();
+	}
 
-  _checkData(startPeriod = true) {
-    for (const key in this.data) {
-      const value = this.data[key];
-      this._check(key, value);
-    }
+	_checkData(startPeriod = true): void {
+		for (const [key, entry] of this.data) {
+			this._check(key, entry);
+		}
 
-    if (startPeriod && this.options.checkperiod > 0) {
-      this.checkTimeout = setTimeout(
-        this._checkData,
-        this.options.checkperiod * 1000,
-        startPeriod
-      );
+		if (startPeriod && this.options.checkperiod > 0) {
+			this.checkTimeout = setTimeout(
+				() => this._checkData(startPeriod),
+				this.options.checkperiod * MS_PER_SEC,
+			);
+			this.checkTimeout.unref?.();
+		}
+	}
 
-      if (this.checkTimeout && this.checkTimeout.unref) {
-        this.checkTimeout.unref();
-      }
-    }
-  }
+	_killCheckPeriod(): void {
+		if (this.checkTimeout !== undefined) {
+			clearTimeout(this.checkTimeout);
+			this.checkTimeout = undefined;
+		}
+	}
 
-  _killCheckPeriod() {
-    if (this.checkTimeout != null) {
-      clearTimeout(this.checkTimeout);
-    }
-  }
+	/**
+	 * Returns the entry if it exists and has not expired (taking
+	 * `deleteOnExpire` into account); otherwise returns `undefined`.
+	 * Centralises the "lookup + expiry handling" path used by get/has/take/etc.
+	 */
+	private _liveEntry(key: Key): WrappedValue<unknown> | undefined {
+		const entry = this.data.get(key);
+		if (entry === undefined) return undefined;
+		return this._check(key, entry) ? entry : undefined;
+	}
 
-  _check(key: Key, data: any) {
-    let retval = true;
-    if (data.t !== 0 && data.t < Date.now()) {
-      if (this.options.deleteOnExpire) {
-        retval = false;
-        this.del(key);
-      }
-      this.emit("expired", key, this._unwrap(data));
-    }
-    return retval;
-  }
+	private _check(key: Key, entry: WrappedValue<unknown>): boolean {
+		if (entry.t === NEVER_EXPIRES || entry.t >= Date.now()) {
+			return true;
+		}
+		const expiredValue = this._unwrap(entry, false);
+		if (this.options.deleteOnExpire) {
+			this.del(key);
+			this.emit('expired', key, expiredValue);
+			return false;
+		}
+		this.emit('expired', key, expiredValue);
+		return true;
+	}
 
-  _isInvalidKey(key: Key) {
-    if (!this.validKeyTypes.includes(typeof key)) {
-      return this._error("EKEYTYPE", { type: typeof key });
-    }
-  }
+	private _isInvalidKey(key: unknown): boolean {
+		return !(VALID_KEY_TYPES as readonly string[]).includes(typeof key);
+	}
 
-  _wrap(value: any, ttl?: Key, asClone = true) {
-    if (!this.options.useClones) {
-      asClone = false;
-    }
-    const now = Date.now();
-    let livetime = 0;
-    const ttlMultiplicator = 1000;
-    if (ttl === 0) {
-      livetime = 0;
-    } else if (typeof ttl === "number") {
-      livetime = now + ttl * ttlMultiplicator;
-    } else {
-      livetime =
-        this.options.stdTTL === 0
-          ? this.options.stdTTL
-          : now + this.options.stdTTL * ttlMultiplicator;
-    }
-    return { t: livetime, v: asClone ? clone(value) : value };
-  }
+	private _assertKey(key: unknown): asserts key is Key {
+		if (this._isInvalidKey(key)) {
+			throw this._error('EKEYTYPE', { type: typeof key });
+		}
+	}
 
-  _unwrap(value: any, asClone = true) {
-    if (!this.options.useClones) {
-      asClone = false;
-    }
-    if (value.v != null) {
-      return asClone ? clone(value.v) : value.v;
-    }
-    return null;
-  }
+	private _assertTtl(ttl: unknown): void {
+		if (ttl === undefined || ttl === null) return;
+		if (typeof ttl !== 'number' || Number.isNaN(ttl)) {
+			throw this._error('ETTLTYPE');
+		}
+	}
 
-  _getKeyLength(key: Key) {
-    return key.toString().length;
-  }
+	/**
+	 * Convert a relative TTL (in seconds) into an absolute expiry timestamp.
+	 * `undefined` falls back to `stdTTL`. Returns `0` when the entry should
+	 * never expire.
+	 */
+	private _resolveExpiry(ttl: number | undefined): number {
+		const seconds = ttl == null ? this.options.stdTTL : ttl;
+		if (seconds === 0) return NEVER_EXPIRES;
+		if (seconds < 0) return Date.now() - 1; // already expired
+		return Date.now() + seconds * MS_PER_SEC;
+	}
 
-  _getValLength(value: any) {
-    if (typeof value === "string") {
-      return value.length;
-    } else if (this.options.forceString) {
-      return JSON.stringify(value).length;
-    } else if (Array.isArray(value)) {
-      return this.options.arrayValueSize * value.length;
-    } else if (typeof value === "number") {
-      return 8;
-    } else if (value != null && typeof value.then === "function") {
-      return this.options.promiseValueSize;
-    } else if (
-      typeof Buffer !== "undefined" &&
-      Buffer != null &&
-      Buffer.isBuffer(value)
-    ) {
-      return value.length;
-    } else if (value != null && typeof value === "object") {
-      return this.options.objectValueSize * Object.keys(value).length;
-    } else if (typeof value === "boolean") {
-      return 8;
-    } else {
-      return 0;
-    }
-  }
+	private _parseFetchArgs<V>(
+		ttlOrValue: number | V,
+		maybeValue: V | undefined,
+	): { ttl: number | undefined; value: V } {
+		if (maybeValue === undefined) {
+			return { ttl: undefined, value: ttlOrValue as V };
+		}
+		return { ttl: ttlOrValue as number, value: maybeValue };
+	}
 
-  _error(type: any, data = {}) {
-    const error: any = new Error();
-    error.name = type;
-    error.errorcode = type;
-    error.message = this.ERRORS[type] ? this.ERRORS[type](data) : "-";
-    error.data = data;
-    return error;
-  }
+	private _wrap<T>(value: T, expiry: number, asClone = true): WrappedValue<T> {
+		const useClone = this.options.useClones && asClone;
+		return {
+			t: expiry,
+			v: useClone ? clone(value) : value,
+			hasValue: true,
+		};
+	}
 
-  _initErrors() {
-    this.ERRORS = {};
-    for (const errType in this._ERRORS) {
-      const errMsg = this._ERRORS[errType];
-      this.ERRORS[errType] = this.createErrorMessage(errMsg);
-    }
-  }
+	private _unwrap<T = unknown>(
+		entry: WrappedValue<unknown>,
+		asClone = true,
+	): T | undefined {
+		if (!entry.hasValue) return undefined;
+		const useClone = this.options.useClones && asClone;
+		return (useClone ? clone(entry.v) : entry.v) as T;
+	}
 
-  createErrorMessage(errMsg: string) {
-    return (args: any) => {
-      return errMsg.replace("__key", args.type);
-    };
-  }
+	private _getKeyLength(key: Key): number {
+		return String(key).length;
+	}
+
+	private _getValLength(value: unknown): number {
+		if (typeof value === 'string') return value.length;
+		if (this.options.forceString) return JSON.stringify(value).length;
+		if (Array.isArray(value)) return this.options.arrayValueSize * value.length;
+		if (typeof value === 'number') return 8;
+		if (
+			value != null &&
+			typeof (value as { then?: unknown }).then === 'function'
+		) {
+			return this.options.promiseValueSize;
+		}
+		if (
+			typeof Buffer !== 'undefined' &&
+			Buffer != null &&
+			Buffer.isBuffer(value)
+		) {
+			return value.length;
+		}
+		if (value != null && typeof value === 'object') {
+			return this.options.objectValueSize * Object.keys(value as object).length;
+		}
+		if (typeof value === 'boolean') return 8;
+		return 0;
+	}
+
+	private _error(type: ErrorCode, data: { type?: string } = {}): CacheError {
+		const message = ERROR_TEMPLATES[type].replace('__key', data.type ?? '');
+		const err = new Error(message) as CacheError;
+		err.name = type;
+		err.errorcode = type;
+		err.data = data;
+		return err;
+	}
 }
 
 export default NodeCache;
