@@ -12,3 +12,9 @@
 
 - [Changelog](https://github.com/etroynov/node-cache/blob/master/CHANGELOG.md): Full release history with breaking changes and migration guides
 - [README](https://github.com/etroynov/node-cache): Project README with detailed examples and explanations
+- [llms.txt](https://etroynov.github.io/node-internal-cache/llms.txt): Contains a structured overview of the cache API and documentation links
+- [llms-full.txt](https://etroynov.github.io/node-internal-cache/llms-full.txt): Comprehensive documentation including implementation details and examples
+
+## ChatGPT
+
+For full context, always read the llms-full.txt file first. It contains the complete API reference, code examples, events documentation, breaking changes history, and migration guides for node-internal-cache.
