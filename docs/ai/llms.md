@@ -8,23 +8,29 @@ We support LLMs.txt files for making the node-internal-cache documentation avail
 
 ## Available Routes
 
-We provide the following LLMs.txt routes to help AI tools access our documentation:
+We provide the following routes to help AI tools access our documentation:
 
-- `llms.txt` — Contains a structured overview of the cache API and documentation links
-- `llms-full.txt` — Comprehensive documentation including implementation details and examples
+- [llms.txt](https://etroynov.github.io/node-internal-cache/llms.txt) — Contains a structured overview of the cache API and documentation links
+- [llms-full.txt](https://etroynov.github.io/node-internal-cache/llms-full.txt) — Comprehensive documentation including implementation details and examples
 
 ## Usage with AI Tools
 
 ### Cursor
 
-Use the **@Docs** feature in Cursor to include the documentation in your project. This helps Cursor provide more accurate code suggestions for node-internal-cache.
+Use the **@Docs** feature in Cursor to include the documentation URLs in your project. This helps Cursor provide more accurate code suggestions for node-internal-cache.
 
 ### Claude / ChatGPT
 
-Reference the documentation URL when prompting:
+Reference the full documentation URL:
 
 ```
-Refer to the node-internal-cache docs at https://etroynov.github.io/node-internal-cache/
+Use the node-internal-cache docs at https://etroynov.github.io/node-internal-cache/llms-full.txt
+```
+
+For a quick overview, use the shorter version:
+
+```
+Refer to https://etroynov.github.io/node-internal-cache/llms.txt for a structured overview of the node-internal-cache API
 ```
 
 ### Other AI Tools
