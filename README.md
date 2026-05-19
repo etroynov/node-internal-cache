@@ -1,9 +1,12 @@
-![Logo](./logo/logo.png)
+<p align="center">
+  <img src="./logo/logo.png" alt="Logo">
+</p>
 
-[![Node.js CI](https://github.com/etroynov/node-internal-cache/actions/workflows/node.js.yml/badge.svg?branch=master)](https://github.com/etroynov/node-internal-cache/actions/workflows/node.js.yml?query=branch%3Amaster)
-[![NPM package version](https://img.shields.io/npm/v/node-internal-cache?label=npm%20package)](https://www.npmjs.com/package/node-internal-cache)
-![NPM package size](https://img.shields.io/bundlephobia/min/node-internal-cache)
-[![GitHub issues](https://img.shields.io/github/issues/etroynov/node-internal-cache)](https://github.com/etroynov/node-internal-cache/issues)
+<p align="center">
+  <a href="https://github.com/etroynov/node-internal-cache/actions/workflows/node.js.yml?query=branch%3Amaster"><img src="https://github.com/etroynov/node-internal-cache/actions/workflows/node.js.yml/badge.svg?branch=master" alt="Node.js CI"></a>
+  <a href="https://www.npmjs.com/package/node-internal-cache"><img src="https://img.shields.io/npm/v/node-internal-cache?label=npm%20package" alt="NPM package version"></a>
+  <a href="https://github.com/etroynov/node-internal-cache/issues"><img src="https://img.shields.io/github/issues/etroynov/node-internal-cache" alt="GitHub issues"></a>
+</p>
 
 # Simple and fast NodeJS internal caching.
 
@@ -17,36 +20,11 @@ According to the [Declaration to not sell out](https://github.com/node-cache/nod
 
 This project is an important part of our products, but since it is unsupported it is slowly becoming obsolete and requires support and regular maintenance, so it was decided to provide this project with ongoing support.
 
-## BREAKING MAJOR RELEASE v5.x
+See [CHANGELOG.md](./CHANGELOG.md) for breaking changes.
 
-The recent 5.6.0 release:
-* boundMethodCheck was removed as part of the legacy code
-* Added Event on missed in get [#223](https://github.com/node-cache/node-cache/pull/223)
-* Added Event on take in take
+## BREAKING MAJOR RELEASE v6.x
 
-The recent 5.5.0 release:
-* Clone pkg removed from the project
-
-The recent 5.4.0 release:
-* rewritten from Javascript -> Typescript
-
-The recent 5.3.0 release:
-* rewritten from ES5 -> ES6, IIFE -> CommonJS
-* updated docs
-
-The recent 5.2.0 release:
-* dropped support for node versions before 18.x!
-* rewritten from coffescript to javascripts 
-* name changed node-cache -> node-internal-cache
-
-The recent 5.x release:
-* dropped support for node versions before 8.x!
-* removed the callback-based api from all methods (you can re-enable them with the option `enableLegacyCallbacks`)
-
-## BREAKING MAJOR RELEASE v6.x UPCOMING
-
-Although not breaking per definition, our typescript rewrite will change internal functions and their names.
-Please get in contact with us, if you are using some parts of node-cache's internal api so we can work something out!
+See [CHANGELOG.md](./CHANGELOG.md#breaking-major-release-v600-2026-05-19) for details.
 
 
 # Install
