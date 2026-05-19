@@ -1,10 +1,9 @@
 ![Logo](./logo/logo.png)
 
-[![Node.js CI](https://github.com/etroynov/node-internal-cache/workflows/Node.js%20CI/badge.svg?branch=master)](https://github.com/etroynov/node-internal-cache/actions?query=workflow%3A%22Node.js+CI%22+branch%3A%22master%22)
+[![Node.js CI](https://github.com/etroynov/node-internal-cache/actions/workflows/node.js.yml/badge.svg?branch=master)](https://github.com/etroynov/node-internal-cache/actions/workflows/node.js.yml?query=branch%3Amaster)
 [![NPM package version](https://img.shields.io/npm/v/node-internal-cache?label=npm%20package)](https://www.npmjs.com/package/node-internal-cache)
 ![NPM package size](https://img.shields.io/bundlephobia/min/node-internal-cache)
-[![GitHub issues](https://img.shields.io/github/issues/etroynov/node-cache)](https://github.com/etroynov/node-internal-cache/issues)
-[![Coveralls Coverage](https://img.shields.io/coveralls/node-internal-cache/node-cache.svg)](https://coveralls.io/github/node-internal-cache/node-cache)
+[![GitHub issues](https://img.shields.io/github/issues/etroynov/node-internal-cache)](https://github.com/etroynov/node-internal-cache/issues)
 
 # Simple and fast NodeJS internal caching.
 
@@ -470,12 +469,12 @@ Node-Cache supports all node versions >= 8
 |0.4.0|2013-10-02|Added nodecache events|
 |0.3.2|2012-05-31|Added Travis tests|
 
-[![NPM](https://nodei.co/npm-dl/node-cache.png?months=6)](https://nodei.co/npm/node-internal-cache/)
+[![NPM](https://nodei.co/npm-dl/node-internal-cache.png?months=6)](https://nodei.co/npm/node-internal-cache/)
 
 # The MIT License (MIT)
 
-Copyright © 2019 Mathias Peter and the node-cache maintainers, https://github.com/node-internal-cache/node-cache
-Copyright © 2025 Evgenii Troinov and the node-cache/node-internal-cache maintainers, https://github.com/etroynov/node-cache
+Copyright © 2019 Mathias Peter and the node-cache maintainers, https://github.com/mpneuried/nodecache
+Copyright © 2025 Evgenii Troinov and the node-cache/node-internal-cache maintainers, https://github.com/etroynov/node-internal-cache
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
