@@ -71,15 +71,19 @@
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage",
 		"lint": "biome check ./src",
+		"docs:dev": "rspress dev",
+		"docs:build": "rspress build",
+		"docs:preview": "rspress preview",
 		"prepublishOnly": "npm run build"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.15",
-		"@rslib/core": "^0.9.0",
+		"@rslib/core": "^0.21.5",
+		"@rspress/core": "^2.0.12",
 		"@types/node": "^22.19.19",
-		"@vitest/coverage-v8": "^3.0.0",
+		"@vitest/coverage-v8": "^4.1.6",
 		"should": "13.2.3",
 		"typescript": "^6.0.3",
-		"vitest": "^3.0.0"
+		"vitest": "^4.1.6"
 	}
 }
