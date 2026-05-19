@@ -1,0 +1,14 @@
+# node-internal-cache
+
+> Simple and fast NodeJS internal caching. A caching module with `set`, `get`, and `delete` methods and TTL support. Like memcached, but entirely in-memory. All keys stored in a single object — practical limit ~1M keys.
+
+## Getting Started
+
+- [Install & Initialize](https://etroynov.github.io/node-internal-cache/guide/getting-started/): Installation, initialization, and all options (stdTTL, checkperiod, useClones, deleteOnExpire, maxKeys)
+- [API Reference](https://etroynov.github.io/node-internal-cache/guide/api/): Complete API — set, mset, get, take, mget, del, ttl, getTtl, keys, has, getStats, flushAll, flushStats, close, fetchAsync
+- [Events](https://etroynov.github.io/node-internal-cache/guide/events/): Event system — set, del, expired, flush, flush_stats
+
+## Optional
+
+- [Changelog](https://github.com/etroynov/node-cache/blob/master/CHANGELOG.md): Full release history with breaking changes and migration guides
+- [README](https://github.com/etroynov/node-cache): Project README with detailed examples and explanations

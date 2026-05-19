@@ -1,0 +1,294 @@
+# node-internal-cache
+
+Simple and fast NodeJS internal caching. A caching module that has `set`, `get` and `delete` methods and works a little bit like memcached. Keys can have a timeout (`ttl`) after which they expire and are deleted from the cache. All keys are stored in a single object so the practical limit is at around 1m keys.
+
+## Why node-internal-cache ?
+
+According to the Declaration to not sell out from the original repository, the `node-cache` package is no longer supported and the authors understandably do not plan to give the repository to other hands, they also recommended that anyone who wants to continue working on the project should create a fork, which is the reason why this project was created.
+
+This project is an important part of our products, but since it is unsupported it is slowly becoming obsolete and requires support and regular maintenance, so it was decided to provide this project with ongoing support.
+
+## Install
+
+```bash
+npm install node-internal-cache --save
+```
+
+## Initialize
+
+```js
+const NodeCache = require("node-internal-cache");
+const myCache = new NodeCache();
+```
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `stdTTL` | `number` | `0` | Standard ttl in seconds for every generated cache element. `0` = unlimited |
+| `checkperiod` | `number` | `600` | Period in seconds for the automatic delete check interval. `0` = no periodic check |
+| `useClones` | `boolean` | `true` | En/disable cloning of variables. `true` returns a copy. `false` saves and returns just the reference |
+| `deleteOnExpire` | `boolean` | `true` | Whether variables will be deleted automatically when they expire |
+| `enableLegacyCallbacks` | `boolean` | `false` | Re-enables usage of callbacks instead of sync functions |
+| `maxKeys` | `number` | `-1` | Maximum amount of keys. `-1` disables the limit |
+
+```js
+const NodeCache = require("node-internal-cache");
+const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 });
+```
+
+Keys can be given as `string` or `number`, but are cast to `string` internally. All other types throw an error.
+
+## API
+
+### set(key, val, [ttl])
+
+Sets a key-value pair. Optional `ttl` in seconds. Returns `true` on success.
+
+```js
+obj = { my: "Special", variable: 42 };
+success = myCache.set("myKey", obj, 10000);
+// true
+```
+
+### mset(Array<{key, val, ttl?}>)
+
+Sets multiple key-value pairs. Returns `true` on success.
+
+```js
+const success = myCache.mset([
+  { key: "myKey", val: obj, ttl: 10000 },
+  { key: "myKey2", val: obj2 },
+]);
+```
+
+### get(key)
+
+Gets a saved value. Returns `undefined` if not found or expired.
+
+```js
+value = myCache.get("myKey");
+if (value === undefined) {
+  // handle miss!
+}
+// { my: "Special", variable: 42 }
+```
+
+### take(key)
+
+Gets the cached value and removes the key from the cache. Equivalent to `get(key)` + `del(key)`.
+
+```js
+myCache.set("myKey", "myValue");
+value = myCache.take("myKey");
+// value === "myValue"; key is deleted
+myCache.has("myKey"); // false
+```
+
+### mget([ key1, key2, ..., keyn ])
+
+Gets multiple values. Returns an object of key-value pairs.
+
+```js
+value = myCache.mget(["myKeyA", "myKeyB"]);
+/*
+  {
+    "myKeyA": { my: "Special", variable: 123 },
+    "myKeyB": { the: "Glory", answer: 42 }
+  }
+*/
+```
+
+### del(key) or del([ key1, key2, ... ])
+
+Deletes one or multiple keys. Returns the number of deleted entries.
+
+```js
+myCache.del("A");
+// 1
+
+myCache.del(["B", "C"]);
+// 2
+```
+
+### ttl(key, ttl)
+
+Redefines the TTL of a key. Returns `true` if found and changed.
+
+```js
+myCache = new NodeCache({ stdTTL: 100 });
+changed = myCache.ttl("existentKey", 100);
+// true
+
+changed2 = myCache.ttl("missingKey", 100);
+// false
+```
+
+### getTtl(key)
+
+Returns:
+- `undefined` if the key does not exist
+- `0` if the key has no TTL
+- a timestamp in ms representing the expiry time
+
+```js
+ts = myCache.getTtl("ttlKey");
+// approximately 1456000600000
+
+ts = myCache.getTtl("noTtlKey");
+// 0
+
+ts = myCache.getTtl("unknownKey");
+// undefined
+```
+
+### keys()
+
+Returns an array of all existing keys.
+
+```js
+mykeys = myCache.keys();
+// [ "all", "my", "keys", "foo", "bar" ]
+```
+
+### has(key)
+
+Returns `boolean` indicating if the key is cached.
+
+```js
+exists = myCache.has("myKey");
+console.log(exists);
+```
+
+### getStats()
+
+Returns cache statistics.
+
+```js
+myCache.getStats();
+/*
+  {
+    keys: 0,    // global key count
+    hits: 0,    // global hit count
+    misses: 0,  // global miss count
+    ksize: 0,   // global key size in bytes
+    vsize: 0    // global value size in bytes
+  }
+*/
+```
+
+### flushAll()
+
+Flushes all cached data.
+
+```js
+myCache.flushAll();
+myCache.getStats();
+// { keys: 0, hits: 0, misses: 0, ksize: 0, vsize: 0 }
+```
+
+### flushStats()
+
+Flushes only the statistics.
+
+```js
+myCache.flushStats();
+```
+
+### close()
+
+Clears the interval timeout set by the check period option.
+
+```js
+myCache.close();
+```
+
+### fetchAsync(key, ttl?, fn)
+
+Async variant of fetch with built-in single-flight deduplication: concurrent misses on the same key share one `fn()` invocation.
+
+```js
+const user = await myCache.fetchAsync("user:42", 60, () => db.getUser(42));
+```
+
+## Events
+
+### set
+
+Fired when a key has been added or changed.
+
+```js
+myCache.on("set", function(key, value) {
+  // ... do something ...
+});
+```
+
+### del
+
+Fired when a key has been removed manually or due to expiry.
+
+```js
+myCache.on("del", function(key, value) {
+  // ... do something ...
+});
+```
+
+### expired
+
+Fired when a key expires.
+
+```js
+myCache.on("expired", function(key, value) {
+  // ... do something ...
+});
+```
+
+### flush
+
+Fired when the cache has been flushed.
+
+```js
+myCache.on("flush", function() {
+  // ... do something ...
+});
+```
+
+### flush_stats
+
+Fired when the cache stats have been flushed.
+
+```js
+myCache.on("flush_stats", function() {
+  // ... do something ...
+});
+```
+
+## Breaking Changes
+
+### v6.x
+
+- Dropped legacy callback API (`enableLegacyCallbacks` option). Use the synchronous API directly.
+- `ttl(key, 0)` now deletes the key to match the documented semantics.
+- Storage switched from plain object to Map. If you accessed `cache.data[key]` directly, use `cache.data.get(key)` / `cache.data.size` instead.
+- `take` event now emits `(key, value)` instead of `(key)`.
+- Removed hand-written `index.d.ts`. Types are now generated from source.
+- Node.js >= 22 required (native `structuredClone`).
+
+### v5.x
+
+- Callbacks are deprecated. Enable with `enableLegacyCallbacks` option (removed in v6).
+- Dropped support for node versions before 18.x.
+- Rewritten from coffeescript to javascript.
+- Name changed from `node-cache` to `node-internal-cache`.
+
+### v3.x
+
+Variables will now be cloned by default. Disable with `useClones: false`.
+
+### v2.x
+
+Changed `.get()` return format — returns the value directly instead of `{ key: value }`.
+
+## License
+
+MIT License. Copyright © 2025 Evgenii Troinov and the node-cache/node-internal-cache maintainers.
