@@ -7,13 +7,13 @@ export default defineConfig({
 	lib: [
 		{
 			format: 'cjs',
-			syntax: 'es2021',
+			syntax: 'es2023',
 			dts: true,
 			autoExtension: true,
 		},
 		{
 			format: 'esm',
-			syntax: 'es2021',
+			syntax: 'es2023',
 			dts: false,
 			autoExtension: true,
 		},

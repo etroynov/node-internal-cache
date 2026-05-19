@@ -29,7 +29,7 @@ export const randomNumber = (max: number) =>
  */
 export const diffKeys = (objA: any, objB: any) => {
 	return Object.keys(objA).reduce((diff: any, key) => {
-		if (objB.hasOwnProperty(key)) {
+		if (Object.hasOwn(objB, key)) {
 			diff[key] = objA[key] - objB[key];
 		}
 		return diff;

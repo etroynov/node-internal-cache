@@ -62,7 +62,7 @@
 	},
 	"license": "MIT",
 	"engines": {
-		"node": ">= 18.0.0"
+		"node": "^22.0.0"
 	},
 	"scripts": {
 		"build": "rslib build && node -e \"require('fs').cpSync('README.md','dist/README.md');require('fs').cpSync('package.json','dist/package.json')\"",
